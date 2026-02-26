@@ -1,40 +1,47 @@
-import db from "../config/db.js";
-import jwt from "jsonwebtoken";
+import db from '../config/db.js';
+import jwt from 'jsonwebtoken';
 
-export const login = (req, res) => {
+export const login = async (req, res) => {
   const { email, password } = req.body;
 
-  const query = "SELECT * FROM users WHERE email = ? AND password = ?";
-
-  db.query(query, [email, password], (err, results) => {
-    if (err) {
-      return res.status(500).json({ message: "Server Error" });
+  try {
+    // 1. Find user by email
+    const query = 'SELECT * FROM users WHERE TRIM(email) = ?';
+    const [rows] = await db.execute(query, [email.trim()]);
+    
+    if (rows.length === 0) {
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    if (results.length === 0) {
-      return res.status(401).json({ message: "Invalid Credentials" });
+    const user = rows[0];
+
+    // 2. Compare plain-text passwords (with trimming)
+    if (password.trim() !== user.password.trim()) {
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    const user = results[0];
-
-    // 🔐 Generate JWT Token
+    // 3. Generate Token with Role
+    const secret = process.env.JWT_SECRET || 'emergency_secret_123';
     const token = jwt.sign(
-      {
-        id: user.id,
-        role: user.role,
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: "8h" }
+      { id: user.id, role: user.role },
+      secret,
+      { expiresIn: '1d' }
     );
 
-    res.json({
-      message: "Login successful",
+    // 4. Send response including the ROLE
+    // This allows the frontend to redirect correctly
+    return res.json({
       token,
       user: {
         id: user.id,
         name: user.full_name,
-        role: user.role,
-      },
+        email: user.email,
+        role: user.role // This will be 'admin', 'employee', or 'non-employee'
+      }
     });
-  });
+
+  } catch (error) {
+    console.error("❌ Login Error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
 };
