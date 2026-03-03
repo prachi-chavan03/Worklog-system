@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Mail, Shield, ArrowLeft } from 'lucide-react';
+import { User, Mail, Shield, ArrowLeft, Briefcase } from 'lucide-react'; // Added Briefcase icon
 
 const Profile = () => {
   const navigate = useNavigate();
   const [userData, setUserData] = useState(null);
 
   useEffect(() => {
-    // This is the key: Load the SPECIFIC logged-in person's data
+    // Load the SPECIFIC logged-in person's data
     const savedUser = JSON.parse(localStorage.getItem("user"));
     if (savedUser) {
       setUserData(savedUser);
@@ -28,11 +28,11 @@ const Profile = () => {
         </button>
 
         <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
-          {/* Header matches Admin CSS style */}
           <div className="bg-white border-b border-gray-100 p-8">
             <h1 className="text-2xl font-black text-gray-800">My Profile</h1>
             <p className="text-gray-400 text-sm font-bold uppercase tracking-widest mt-1">
-              {isAdmin ? 'Administrator Account' : 'Employee Account'}
+              {/* UPDATED: Changed 'Employee Account' to 'User Account' */}
+              {isAdmin ? 'Administrator Account' : 'User Account'}
             </p>
           </div>
 
@@ -71,9 +71,31 @@ const Profile = () => {
               </div>
             </div>
 
-            {/* ROLE SECTION */}
+            {/* NEW SECTION: DESIGNATION (Below Email) */}
             <div>
               <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Designation</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center">
+                  <Briefcase size={18} className="text-blue-600" />
+                </div>
+                {isAdmin ? (
+                  <input 
+                    type="text" 
+                    placeholder="Enter designation (Optional)"
+                    className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none font-bold"
+                    defaultValue={userData.designation || ""}
+                  />
+                ) : (
+                  <div className="w-full pl-11 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-100 font-bold text-gray-700">
+                    {userData.designation || "Not Set"}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* ROLE SECTION (Corrected label to 'Account Role') */}
+            <div>
+              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Account Role</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center">
                   <Shield size={18} className="text-blue-600" />

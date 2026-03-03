@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UserPlus, ArrowLeft, Save } from 'lucide-react';
+import { UserPlus, ArrowLeft, Save, Briefcase } from 'lucide-react'; 
 import toast from 'react-hot-toast';
 
 const AddUser = () => {
@@ -8,6 +8,7 @@ const AddUser = () => {
   const [formData, setFormData] = useState({
     full_name: '',
     email: '',
+    designation: '', 
     password: '',
     confirmPassword: '',
     isEmployee: true
@@ -27,6 +28,7 @@ const AddUser = () => {
         body: JSON.stringify({
           full_name: formData.full_name,
           email: formData.email,
+          designation: formData.designation, 
           password: formData.password,
           role: formData.isEmployee ? 'employee' : 'non-employee'
         }),
@@ -59,35 +61,74 @@ const AddUser = () => {
             <p className="text-blue-100 mt-1">Fill in the details to create a new account.</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="p-8 space-y-5">
+          <form onSubmit={handleSubmit} className="p-8 space-y-5" autoCorrect="off">
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-2">Full Name</label>
-              <input type="text" required className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" 
-                onChange={(e) => setFormData({...formData, full_name: e.target.value})} />
+              <input 
+                type="text" 
+                required 
+                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" 
+                onChange={(e) => setFormData({...formData, full_name: e.target.value})} 
+              />
             </div>
 
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">Email Address</label>
-              <input type="email" required className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" 
-                onChange={(e) => setFormData({...formData, email: e.target.value})} />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Email Address</label>
+                <input 
+                  type="email" 
+                  required 
+                  name="new_user_email_unique"
+                  autoComplete="off"
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" 
+                  onChange={(e) => setFormData({...formData, email: e.target.value})} 
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Designation (Optional)</label>
+                <input 
+                  type="text" 
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" 
+                  placeholder="e.g. Software Engineer"
+                  onChange={(e) => setFormData({...formData, designation: e.target.value})} 
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-2">Password</label>
-                <input type="password" required className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" 
-                  onChange={(e) => setFormData({...formData, password: e.target.value})} />
+                <input 
+                  type="password" 
+                  required 
+                  name="new_user_password_unique"
+                  autoComplete="new-password"
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" 
+                  onChange={(e) => setFormData({...formData, password: e.target.value})} 
+                />
               </div>
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-2">Confirm Password</label>
-                <input type="password" required className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" 
-                  onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})} />
+                <input 
+                  type="password" 
+                  required 
+                  name="confirm_user_password_unique"
+                  autoComplete="new-password"
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" 
+                  onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})} 
+                />
               </div>
             </div>
 
             <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-xl">
-              <input type="checkbox" id="roleCheck" checked={formData.isEmployee} className="w-5 h-5 accent-blue-600"
-                onChange={(e) => setFormData({...formData, isEmployee: e.target.checked})} />
+              <input 
+                type="checkbox" 
+                id="roleCheck" 
+                checked={formData.isEmployee} 
+                className="w-5 h-5 accent-blue-600"
+                onChange={(e) => setFormData({...formData, isEmployee: e.target.checked})} 
+              />
               <label htmlFor="roleCheck" className="text-sm font-bold text-blue-800 cursor-pointer">
                 Register as Employee (Uncheck for Non-Employee)
               </label>

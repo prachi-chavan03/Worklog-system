@@ -28,15 +28,15 @@ export const login = async (req, res) => {
       { expiresIn: '1d' }
     );
 
-    // 4. Send response including the ROLE
-    // This allows the frontend to redirect correctly
+    // 4. Send response including the ROLE and DESIGNATION
     return res.json({
       token,
       user: {
         id: user.id,
         name: user.full_name,
         email: user.email,
-        role: user.role // This will be 'admin', 'employee', or 'non-employee'
+        role: user.role,
+        designation: user.designation // ADDED THIS LINE
       }
     });
 

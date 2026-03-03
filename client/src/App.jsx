@@ -19,6 +19,8 @@ function App() {
         <Route path="/add-user" element={<AddUser />} />
         <Route path="/user-home" element={<UserHome />} />
         
+        {/* NEW ROUTE: This allows Admin to view a specific user's dashboard */}
+        <Route path="/admin/view-user/:adminViewUserId" element={<UserHome />} />
       </Routes>
     </Router>
   );
