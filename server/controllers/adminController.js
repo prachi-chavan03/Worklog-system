@@ -264,3 +264,17 @@ export const getPendingResetRequests = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+//resolve reset req
+export const resolveResetRequest = async (req, res) => {
+    const { id } = req.params;
+    try {
+        await db.execute(
+            'UPDATE password_requests SET status = "Resolved" WHERE id = ?', 
+            [id]
+        );
+        res.status(200).json({ message: "Request marked as resolved" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};

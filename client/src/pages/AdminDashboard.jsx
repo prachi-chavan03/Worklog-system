@@ -5,7 +5,7 @@ import {
   UserPlus, LogOut, User, Eye, Trash2, 
   Users, Clock, ClipboardList, Menu, X, 
   Plus, Sun, Moon, Briefcase, ChevronDown, Mail, AlertCircle,
-  CheckCircle, XCircle // Added these for the status icons
+  CheckCircle, XCircle, Check// Added these for the status icons
 } from 'lucide-react';
 
 const AdminDashboard = () => {
@@ -101,7 +101,19 @@ const AdminDashboard = () => {
     toast.success("Logged out successfully");
     navigate('/');
   };
-
+   
+    //Resolve for reset pass req
+    const handleResolveRequest = async (requestId) => {
+  // This matches the /resolve-reset/:id route above
+  const res = await fetch(`http://localhost:5000/api/admin/resolve-reset/${requestId}`, {
+    method: 'PUT', // Must match the router method
+  });
+  
+  if (res.ok) {
+    toast.success("Request resolved");
+    setResetRequests(prev => prev.filter(req => req.id !== requestId));
+  }
+};
   return (
     <div className={`${darkMode ? 'dark bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'} min-h-screen font-sans transition-colors duration-300`}>
       {/* Navigation */}
@@ -128,58 +140,78 @@ const AdminDashboard = () => {
             <Users size={20} className="text-gray-300" />
           </div>
           {/* Reset Requests Dropdown Card */}
-          <div className="relative">
-            <div 
-              onClick={() => setIsResetDropdownOpen(!isResetDropdownOpen)}
-              className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} p-5 rounded-2xl shadow-sm border-l-4 border-red-500 flex justify-between items-center cursor-pointer hover:scale-[1.02] transition-transform`}
-            >
-              <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Reset Requests</p>
-                <div className="flex items-center gap-2">
-                  <p className="text-2xl font-black mt-1">{resetRequests.length}</p>
-                  <ChevronDown size={16} className={`mt-1 transition-transform ${isResetDropdownOpen ? 'rotate-180' : ''}`} />
-                </div>
-              </div>
-              <Mail size={20} className="text-red-500" />
-            </div>
+<div className="relative">
+  <div 
+    onClick={() => setIsResetDropdownOpen(!isResetDropdownOpen)}
+    className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} p-5 rounded-2xl shadow-sm border-l-4 border-red-500 flex justify-between items-center cursor-pointer hover:scale-[1.02] transition-transform`}
+  >
+    <div>
+      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Reset Requests</p>
+      <div className="flex items-center gap-2">
+        <p className="text-2xl font-black mt-1">{resetRequests.length}</p>
+        <ChevronDown size={16} className={`mt-1 transition-transform ${isResetDropdownOpen ? 'rotate-180' : ''}`} />
+      </div>
+    </div>
+    <Mail size={20} className="text-red-500" />
+  </div>
 
-            {isResetDropdownOpen && (
-              <div className={`absolute top-full left-0 w-full mt-2 rounded-xl shadow-xl border z-50 overflow-hidden ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
-                {resetRequests.length === 0 ? (
-                  <div className="p-4 text-xs font-bold text-center text-gray-400">No requests!</div>
-                ) : (
-                  resetRequests.map(req => (
-                    <div 
-                      key={req.id}
-                      className={`w-full flex items-center justify-between px-4 py-3 border-b last:border-0 transition-colors ${darkMode ? 'hover:bg-gray-700 border-gray-700' : 'hover:bg-red-50 border-gray-100'}`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="bg-blue-100 p-2 rounded-full">
-                          <User size={14} className="text-blue-600" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold">{req.full_name || 'User'}</p>
-                          <p className="text-[10px] text-gray-400 truncate w-32">{req.email}</p>
-                        </div>
-                      </div>
-                      <button 
-  onClick={() => {
+  {isResetDropdownOpen && (
+    <div className={`absolute top-full left-0 w-full mt-2 rounded-xl shadow-xl border z-50 overflow-hidden ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
+      {resetRequests.length === 0 ? (
+        <div className="p-4 text-xs font-bold text-center text-gray-400">No requests!</div>
+      ) : (
+        resetRequests.map(req => (
+          <div 
+            key={req.id}
+            className={`w-full flex items-center justify-between px-4 py-3 border-b last:border-0 transition-colors ${darkMode ? 'hover:bg-gray-700 border-gray-700' : 'hover:bg-red-50 border-gray-100'}`}
+          >
+            <div className="flex items-center gap-3">
+              <div className="bg-blue-100 p-2 rounded-full">
+                <User size={14} className="text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm font-bold">{req.full_name || 'User'}</p>
+                <p className="text-[10px] text-gray-400 truncate w-32">{req.email}</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-1">
+              {/* TICKMARK BUTTON */}
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent dropdown from closing
+                  handleResolveRequest(req.id);
+                }}
+                className="p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors"
+                title="Mark as Resolved"
+              >
+                <Check size={16} strokeWidth={3} />
+              </button>
+
+              
+              {/* NAVIGATE BUTTON in Reset Requests Section */}
+<button 
+  onClick={(e) => {
+    e.stopPropagation(); // Prevents the dropdown from closing
     if (req.user_id) {
-      navigate(`/admin/edit-user/${req.user_id}`);
+      // Use the exact same path format as your working User Management table
+      navigate(`/admin/edit-profile/:id/${req.user_id}`);
     } else {
-      toast.error("User record not found");
+      toast.error("User record not found in database");
     }
   }}
   className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
+  title="Edit User Profile"
 >
   <User size={16} />
 </button>
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
+            </div>
           </div>
+        ))
+      )}
+    </div>
+  )}
+</div>
 
           <div className="relative">
             <div 

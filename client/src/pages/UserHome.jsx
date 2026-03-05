@@ -11,6 +11,7 @@ const UserHome = () => {
   const loggedInUser = JSON.parse(localStorage.getItem("user"));
   const effectiveUserId = adminViewUserId || loggedInUser?.id;
   const isAdminMode = Boolean(adminViewUserId); 
+  const [viewingUserName, setViewingUserName] = useState("");
 
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
@@ -24,6 +25,23 @@ const UserHome = () => {
 
   const todayStr = new Date().toLocaleDateString('en-CA');
   const isWeekEditable = selectedWeek <= 1;
+  
+  // Add this to fetch the name of the user being viewed by admin
+useEffect(() => {
+  if (isAdminMode && adminViewUserId) {
+    fetch(`http://localhost:5000/api/admin/users`) // Re-using your existing users endpoint
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          const viewedUser = data.find(u => u.id.toString() === adminViewUserId.toString());
+          if (viewedUser) {
+            setViewingUserName(viewedUser.full_name);
+          }
+        }
+      })
+      .catch(err => console.error("Error fetching viewed user name:", err));
+  }
+}, [adminViewUserId, isAdminMode]);
 
   useEffect(() => {
     const savedUser = JSON.parse(localStorage.getItem("user"));
@@ -270,11 +288,20 @@ const UserHome = () => {
       </nav>
 
       {isAdminMode && (
-        <div className="bg-amber-100 border-l-4 border-amber-500 p-4 mb-4 flex justify-between items-center">
-          <div><p className="text-amber-700 font-bold">ADMIN MODE</p><p className="text-xs text-amber-600">Currently viewing User ID: {adminViewUserId}</p></div>
-          <button onClick={() => navigate('/admin-dashboard')} className="bg-amber-500 text-white px-3 py-1 rounded hover:bg-amber-600">Back to Dashboard</button>
-        </div>
-      )}
+  <div className="bg-amber-100 border-l-4 border-amber-500 p-4 mb-4 flex justify-between items-center">
+    <div>
+      <p className="text-sm text-amber-700">
+        Currently viewing <span className="font-bold">{viewingUserName}</span>'s worklogs
+      </p>
+    </div>
+    <button 
+      onClick={() => navigate('/admin-dashboard')} 
+      className="bg-amber-500 text-white px-3 py-1 rounded hover:bg-amber-600 text-xs font-bold"
+    >
+      Back to Dashboard
+    </button>
+  </div>
+)}
 
       <main className="p-4 md:p-8 max-w-7xl mx-auto">
         {!isWeekEditable && (
