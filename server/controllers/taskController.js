@@ -1,11 +1,19 @@
 import db from '../config/db.js';
 
-// 1. FETCH LOGS
+
+// 1. FETCH LOGS (Updated to include User Registration Details)
 export const getUserLogs = async (req, res) => {
     try {
         const { userId } = req.params;
+        
+        // We now start FROM 'users' to ensure we get a result even if logs are empty
         const sql = `
             SELECT 
+                u.full_name AS userName,
+                u.email AS userEmail,
+                u.role AS userRole,
+                u.designation AS userDesignation,
+                u.status AS userStatus, -- Added this to fetch user status
                 wl.work_date, 
                 wl.hours_worked, 
                 wl.task_description, 
@@ -13,18 +21,36 @@ export const getUserLogs = async (req, res) => {
                 wl.module_name,
                 wl.day_type, 
                 COALESCE(p.project_name, 'Others') AS project_name
-            FROM work_logs wl
+            FROM users u
+            LEFT JOIN work_logs wl ON u.id = wl.user_id
             LEFT JOIN projects p ON wl.project_id = p.id
-            WHERE wl.user_id = ?
+            WHERE u.id = ?
             ORDER BY wl.work_date DESC`;
 
         const [rows] = await db.execute(sql, [userId]);
-        res.status(200).json(rows);
+
+        // If no user is found at all in the users table
+        if (rows.length === 0) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        // Structure the response so the frontend can easily find user details
+        const responseData = {
+            userName: rows[0].userName,
+            userEmail: rows[0].userEmail,
+            userRole: rows[0].userRole,
+            userDesignation: rows[0].userDesignation,
+            // If work_date is null, it means the LEFT JOIN found no logs
+            logs: rows[0].work_date ? rows : [] 
+        };
+
+        res.status(200).json(responseData);
     } catch (err) {
         console.error("Fetch Error:", err.message);
         res.status(500).json({ error: err.message });
     }
 };
+
 
 // 2. SAVE/UPDATE ENTRY
 export const saveDayEntry = async (req, res) => {
@@ -128,5 +154,57 @@ export const submitWeeklySheet = async (req, res) => {
     } catch (err) {
         console.error("Submission Error:", err);
         res.status(500).json({ error: "Submission failed" });
+    }
+};
+
+// 5.update-user logic with this:
+export const updateUserProfile = async (req, res) => {
+    try {
+        // 1. Get ID from params
+        const { id } = req.params; 
+        
+        // 2. Get data from body
+        const { full_name, email, designation, role, status, password } = req.body;
+
+        // DEBUG: This will show you exactly which one is 'undefined' in your terminal
+        console.log("DEBUG VALUES:", { id, full_name, email, status });
+
+        if (!id || id === 'undefined') {
+            return res.status(400).json({ error: "User ID is required and cannot be undefined" });
+        }
+
+        let sql;
+        let params;
+
+        if (password && password.trim() !== "") {
+            sql = `UPDATE users SET full_name = ?, email = ?, designation = ?, role = ?, status = ?, password = ? WHERE id = ?`;
+            // Use || fallbacks to prevent 'undefined'
+            params = [
+                full_name || '', 
+                email || '', 
+                designation || '', 
+                role || 'Employee', 
+                status || 'active', 
+                password, 
+                id
+            ];
+        } else {
+            sql = `UPDATE users SET full_name = ?, email = ?, designation = ?, role = ?, status = ? WHERE id = ?`;
+            params = [
+                full_name || '', 
+                email || '', 
+                designation || '', 
+                role || 'Employee', 
+                status || 'active', 
+                id
+            ];
+        }
+
+        const [result] = await db.execute(sql, params);
+        res.status(200).json({ message: "Success" });
+
+    } catch (err) {
+        console.error("Update Error:", err.message);
+        res.status(500).json({ error: err.message });
     }
 };

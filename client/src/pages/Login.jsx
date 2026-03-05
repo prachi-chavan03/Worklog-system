@@ -20,7 +20,7 @@ const Login = () => {
   }, []);
 // Inside Login.jsx
 const handleLogin = async (e) => {
-  e.preventDefault(); // <--- This is the magic line that stops the "?"
+  e.preventDefault();
 
   try {
     const res = await fetch('http://localhost:5000/api/auth/login', {
@@ -32,15 +32,22 @@ const handleLogin = async (e) => {
     const data = await res.json();
 
     if (res.ok) {
-      // This saves the {id, name, email, role} your backend sends
+      // 1. Save user info, token, and role
       localStorage.setItem('user', JSON.stringify(data.user)); 
       localStorage.setItem('token', data.token);
+      localStorage.setItem('role', data.user.role); 
 
-      toast.success(`Welcome ${data.user.name}`);
+      toast.success(`Welcome ${data.user.full_name || data.user.name}`);
 
+      // 2. NEW REDIRECT LOGIC
       if (data.user.role === 'admin') {
+        // Full access for the actual Admin
         navigate('/admin-dashboard');
+      } else if (data.user.role === 'non-employee') {
+        // Send the non-employee to their own specific page
+        navigate('/manager-dashboard'); 
       } else {
+        // Standard employees go to their personal page
         navigate('/user-home'); 
       }
     } else {

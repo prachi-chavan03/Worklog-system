@@ -78,3 +78,170 @@ export const addProject = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
+// update user profile by admin only
+export const updateUserProfile = async (req, res) => {
+    try {
+        const { id } = req.params;
+        // Added 'status' to the destructured body
+        const { full_name, email, designation, role, status, password } = req.body;
+
+        let sql;
+        let params;
+
+        // If password is provided, include it in the update (along with status)
+        if (password && password.trim() !== "") {
+            sql = `UPDATE users SET full_name = ?, email = ?, designation = ?, role = ?, status = ?, password = ? WHERE id = ?`;
+            params = [full_name, email, designation, role, status, password, id];
+        } else {
+            // Otherwise, update profile information including the new status
+            sql = `UPDATE users SET full_name = ?, email = ?, designation = ?, role = ?, status = ? WHERE id = ?`;
+            params = [full_name, email, designation, role, status, id];
+        }
+
+        const [result] = await db.execute(sql, params);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        res.status(200).json({ message: "User profile updated successfully" });
+    } catch (err) {
+        console.error("Update Error:", err.message);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// 5. GET PENDING LOGS SUMMARY (New)
+export const getPendingLogsSummary = async (req, res) => {
+  try {
+    // 1. Fetch employees (exclude admins)
+    const [users] = await db.execute(
+      "SELECT id, full_name, email, employee_id FROM users WHERE role != 'admin'"
+    );
+    
+    // 2. Generate Mon-Fri dates for the last 14 days
+    const businessDays = [];
+    const today = new Date();
+    for (let i = 0; i < 14; i++) {
+      let d = new Date();
+      d.setDate(today.getDate() - i);
+      let dayOfWeek = d.getDay();
+      if (dayOfWeek !== 0 && dayOfWeek !== 6) { // Skip Sat/Sun
+        businessDays.push(d.toISOString().split('T')[0]);
+      }
+    }
+
+    if (businessDays.length === 0) return res.json([]);
+
+    const pendingSummary = [];
+
+    for (const user of users) {
+      // ✅ FIX: Changed 'logs' to 'work_logs' to match your schema
+      const [entries] = await db.query(
+        "SELECT work_date FROM work_logs WHERE user_id = ? AND work_date IN (?)",
+        [user.id, businessDays]
+      );
+
+      // Normalize DB dates to YYYY-MM-DD string for comparison
+      const savedDates = entries.map(row => {
+        const d = new Date(row.work_date);
+        return d.toLocaleDateString('en-CA'); // en-CA gives YYYY-MM-DD
+      });
+
+      const missingDates = businessDays.filter(date => !savedDates.includes(date));
+
+      if (missingDates.length > 0) {
+        pendingSummary.push({
+          id: user.id,
+          full_name: user.full_name,
+          email: user.email,
+          missing_count: missingDates.length,
+          missing_dates: missingDates.sort() // Keeps them in order
+        });
+      }
+    }
+    
+    res.status(200).json(pendingSummary);
+  } catch (error) {
+    console.error("❌ Pending Logs Logic Error:", error.message);
+    res.status(500).json({ message: "Internal Server Error", error: error.message });
+  }
+};
+
+// 6. INFORM USER (New)
+export const informUser = async (req, res) => {
+  const { email, pendingDates } = req.body;
+
+  // DEBUG: Check if variables are loaded
+  console.log("EMAIL_USER:", process.env.EMAIL_USER);
+  console.log("EMAIL_PASS:", process.env.EMAIL_PASS ? "EXISTS" : "MISSING");
+
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    return res.status(500).json({ 
+      message: "Email credentials not configured in server .env file" 
+    });
+  }
+
+  try {
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+
+    // ... rest of your mailOptions and sendMail code
+
+    // Formatting dates for a clean HTML list
+    const dateList = pendingDates.map(d => 
+      `<li>${new Date(d).toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short' })}</li>`
+    ).join('');
+
+    const mailOptions = {
+      from: `"Worklog Admin" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: 'Action Required: Pending Work Logs',
+      html: `
+        <div style="font-family: sans-serif; color: #333;">
+          <h3>Hello,</h3>
+          <p>This is a reminder to fill your work logs for the following dates:</p>
+          <ul style="color: #d32f2f; font-weight: bold;">
+            ${dateList}
+          </ul>
+          <p>Please complete your submissions as soon as possible.</p>
+          <hr />
+          <p style="font-size: 12px; color: #777;">Worklog Management System</p>
+        </div>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
+    res.status(200).json({ success: true, message: "Email sent successfully" });
+  } catch (error) {
+    // Check your terminal for this specific error message
+    console.error("❌ Nodemailer Error:", error.message);
+    res.status(500).json({ message: "Failed to send email", details: error.message });
+  }
+};
+
+// 7. GET SINGLE USER BY ID (Fixes the 404 & JSON error)
+export const getUserById = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [rows] = await db.execute(
+      'SELECT id, full_name, email, designation, role, employee_id FROM users WHERE id = ?',
+      [id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json(rows[0]);
+  } catch (error) {
+    console.error("❌ Fetch User By ID Error:", error.message);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
