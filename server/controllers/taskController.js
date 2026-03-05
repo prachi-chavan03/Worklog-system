@@ -2,7 +2,7 @@ import db from '../config/db.js';
 
 
 // 1. FETCH LOGS (Updated to include User Registration Details)
-export const getUserLogs = async (req, res) => {
+export const getUserDetails = async (req, res) => {
     try {
         const { userId } = req.params;
         
@@ -40,6 +40,7 @@ export const getUserLogs = async (req, res) => {
             userEmail: rows[0].userEmail,
             userRole: rows[0].userRole,
             userDesignation: rows[0].userDesignation,
+            userStatus: rows[0].userStatus, // <-- CRITICAL: Ensure this is here
             // If work_date is null, it means the LEFT JOIN found no logs
             logs: rows[0].work_date ? rows : [] 
         };
@@ -205,6 +206,31 @@ export const updateUserProfile = async (req, res) => {
 
     } catch (err) {
         console.error("Update Error:", err.message);
+        res.status(500).json({ error: err.message });
+    }
+};
+//Fetch logs for a specific user 
+export const getUserLogs = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const sql = `
+            SELECT 
+                wl.work_date, 
+                wl.hours_worked, 
+                wl.task_description, 
+                wl.is_wfh, 
+                wl.module_name,
+                wl.day_type, 
+                COALESCE(p.project_name, 'Others') AS project_name
+            FROM work_logs wl
+            LEFT JOIN projects p ON wl.project_id = p.id
+            WHERE wl.user_id = ?
+            ORDER BY wl.work_date DESC`;
+
+        const [rows] = await db.execute(sql, [userId]);
+        res.status(200).json(rows);
+    } catch (err) {
+        console.error("Fetch Error:", err.message);
         res.status(500).json({ error: err.message });
     }
 };

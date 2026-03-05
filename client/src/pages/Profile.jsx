@@ -69,7 +69,7 @@ const Profile = () => {
     const fetchUserData = async () => {
       if (targetUserId) {
         try {
-          const response = await fetch(`http://localhost:5000/api/tasks/get-logs/${targetUserId}`);
+          const response = await fetch(`http://localhost:5000/api/tasks/get-user-info/${targetUserId}`);
           const data = await response.json();
 
           if (response.ok) {

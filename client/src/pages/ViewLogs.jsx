@@ -14,38 +14,43 @@ const ViewLogs = () => {
   const todayStr = new Date().toLocaleDateString('en-CA');
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Fetch projects to ensure dropdowns/labels match (even if read-only)
-        const projRes = await fetch('http://localhost:5000/api/tasks/projects');
-        const projData = await projRes.json();
-        if (projRes.ok) setDbProjects(projData);
+  const fetchData = async () => {
+    try {
+      // 1. Fetch projects
+      const projRes = await fetch('http://localhost:5000/api/tasks/projects');
+      const projData = await projRes.json();
+      if (projRes.ok) setDbProjects(projData);
 
-        // Fetch the specific user's logs
-        const response = await fetch(`http://localhost:5000/api/tasks/get-logs/${id}`);
-        const data = await response.json();
+      // 2. Fetch User Info (Function 2 - Returns Object)
+      const infoRes = await fetch(`http://localhost:5000/api/tasks/get-user-info/${id}`);
+      const infoData = await infoRes.json();
+      if (infoRes.ok) setEmployeeName(infoData.full_name);
 
-        if (response.ok && Array.isArray(data)) {
-          const formattedData = {};
-          data.forEach(log => {
-            const dateKey = new Date(log.work_date).toLocaleDateString('en-CA');
-            formattedData[dateKey] = {
-              day_type: log.day_type || "Working",
-              project_name: log.project_name,
-              module_name: log.module_name || "",
-              task_description: log.task_description,
-              hours_worked: log.hours_worked, 
-              is_wfh: log.is_wfh === 1
-            };
-          });
-          setLogData(formattedData);
-          if(data.length > 0) setEmployeeName(data[0].full_name);
-        }
-      } catch (error) { console.error("Fetch error:", error); }
-    };
-    fetchData();
-  }, [id]);
+      // 3. Fetch User Logs (Function 1 - Returns Array)
+      const logRes = await fetch(`http://localhost:5000/api/tasks/get-logs/${id}`);
+      const logDataArray = await logRes.json();
 
+      if (logRes.ok && Array.isArray(logDataArray)) {
+        const formattedData = {};
+        logDataArray.forEach(log => {
+          const dateKey = new Date(log.work_date).toLocaleDateString('en-CA');
+          formattedData[dateKey] = {
+            day_type: log.day_type || "Working",
+            project_name: log.project_name,
+            module_name: log.module_name || "",
+            task_description: log.task_description,
+            hours_worked: log.hours_worked, 
+            is_wfh: log.is_wfh === 1
+          };
+        });
+        setLogData(formattedData);
+      }
+    } catch (error) { 
+      console.error("Fetch error:", error); 
+    }
+  };
+  fetchData();
+}, [id]);
   const getWeekRanges = () => {
     const ranges = [];
     const now = new Date();

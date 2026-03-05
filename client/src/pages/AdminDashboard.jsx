@@ -4,7 +4,8 @@ import toast from 'react-hot-toast';
 import { 
   UserPlus, LogOut, User, Eye, Trash2, 
   Users, Clock, ClipboardList, Menu, X, 
-  Plus, Sun, Moon, Briefcase, ChevronDown, Mail, AlertCircle 
+  Plus, Sun, Moon, Briefcase, ChevronDown, Mail, AlertCircle,
+  CheckCircle, XCircle // Added these for the status icons
 } from 'lucide-react';
 
 const AdminDashboard = () => {
@@ -23,6 +24,10 @@ const AdminDashboard = () => {
   const [isPendingDropdownOpen, setIsPendingDropdownOpen] = useState(false);
   const [selectedUserPending, setSelectedUserPending] = useState(null);
 
+  const [resetRequests, setResetRequests] = useState([]);
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  const [isResetDropdownOpen, setIsResetDropdownOpen] = useState(false);
+
   // Fetch Users, Projects, and Pending Logs
   useEffect(() => {
     const fetchData = async () => {
@@ -39,6 +44,12 @@ const AdminDashboard = () => {
         const pendingRes = await fetch('http://localhost:5000/api/admin/pending-logs-summary');
         const pendingData = await pendingRes.json();
         if (pendingRes.ok) setPendingUsers(pendingData);
+
+        // Fetch password reset requests
+        const resetRes = await fetch('http://localhost:5000/api/admin/reset-requests');
+        const resetData = await resetRes.json();
+        if (resetRes.ok) setResetRequests(resetData);
+
       } catch (error) {
         toast.error("Failed to load dashboard data");
       }
@@ -100,7 +111,7 @@ const AdminDashboard = () => {
           <button onClick={() => setDarkMode(!darkMode)} className={`p-2 rounded-lg transition-colors ${darkMode ? 'bg-gray-700 text-yellow-400 hover:bg-gray-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
             {darkMode ? <Sun size={18} /> : <Moon size={18} />}
           </button>
-          <button onClick={() => navigate('/profile')} className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all ${darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'}`}>
+          <button onClick={() => navigate('/profile')} className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all ${darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-100'}`}>
             <User size={18} className="text-blue-600" /> Profile
           </button>
           <button onClick={handleLogout} className="bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-red-600 transition-all shadow-md">
@@ -116,12 +127,60 @@ const AdminDashboard = () => {
             <div><p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Users</p><p className="text-2xl font-black mt-1">{users.length}</p></div>
             <Users size={20} className="text-gray-300" />
           </div>
-          <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} p-5 rounded-2xl shadow-sm border-l-4 border-emerald-500 flex justify-between items-center`}>
-            <div><p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Hours</p><p className="text-2xl font-black mt-1">480</p></div>
-            <Clock size={20} className="text-gray-300" />
+          {/* Reset Requests Dropdown Card */}
+          <div className="relative">
+            <div 
+              onClick={() => setIsResetDropdownOpen(!isResetDropdownOpen)}
+              className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} p-5 rounded-2xl shadow-sm border-l-4 border-red-500 flex justify-between items-center cursor-pointer hover:scale-[1.02] transition-transform`}
+            >
+              <div>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Reset Requests</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-2xl font-black mt-1">{resetRequests.length}</p>
+                  <ChevronDown size={16} className={`mt-1 transition-transform ${isResetDropdownOpen ? 'rotate-180' : ''}`} />
+                </div>
+              </div>
+              <Mail size={20} className="text-red-500" />
+            </div>
+
+            {isResetDropdownOpen && (
+              <div className={`absolute top-full left-0 w-full mt-2 rounded-xl shadow-xl border z-50 overflow-hidden ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
+                {resetRequests.length === 0 ? (
+                  <div className="p-4 text-xs font-bold text-center text-gray-400">No requests!</div>
+                ) : (
+                  resetRequests.map(req => (
+                    <div 
+                      key={req.id}
+                      className={`w-full flex items-center justify-between px-4 py-3 border-b last:border-0 transition-colors ${darkMode ? 'hover:bg-gray-700 border-gray-700' : 'hover:bg-red-50 border-gray-100'}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="bg-blue-100 p-2 rounded-full">
+                          <User size={14} className="text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold">{req.full_name || 'User'}</p>
+                          <p className="text-[10px] text-gray-400 truncate w-32">{req.email}</p>
+                        </div>
+                      </div>
+                      <button 
+  onClick={() => {
+    if (req.user_id) {
+      navigate(`/admin/edit-user/${req.user_id}`);
+    } else {
+      toast.error("User record not found");
+    }
+  }}
+  className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
+>
+  <User size={16} />
+</button>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
           </div>
 
-          {/* Pending Logs Dropdown Card */}
           <div className="relative">
             <div 
               onClick={() => setIsPendingDropdownOpen(!isPendingDropdownOpen)}
@@ -158,7 +217,6 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* User Specific Pending Logs Component */}
         {selectedUserPending && (
           <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
             <div className={`rounded-3xl shadow-2xl w-full max-w-md overflow-hidden ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}`}>
@@ -190,7 +248,6 @@ const AdminDashboard = () => {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column: User Management */}
           <div className="lg:col-span-2">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
               <h2 className={`text-xl font-black ${darkMode ? 'text-white' : 'text-gray-800'}`}>User Management</h2>
@@ -204,6 +261,7 @@ const AdminDashboard = () => {
                   <tr>
                     <th className="px-6 py-4 text-[11px] font-black text-gray-400 uppercase">Sr.No</th>
                     <th className="px-6 py-4 text-[11px] font-black text-gray-400 uppercase">User Details</th>
+                    <th className="px-6 py-4 text-[11px] font-black text-gray-400 uppercase text-center">Status</th>
                     <th className="px-6 py-4 text-[11px] font-black text-gray-400 uppercase text-center">Actions</th>
                   </tr>
                 </thead>
@@ -215,36 +273,41 @@ const AdminDashboard = () => {
                         <div className={`font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{u.full_name}</div>
                         <div className="text-[10px] text-gray-400">EMP ID: {u.employee_id} | {u.email}</div>
                       </td>
+                      {/* Status Column - Corrected the variable from users to u */}
                       <td className="px-6 py-4">
-  <div className="flex justify-center gap-3">
-    {/* View Icon */}
-    <button 
-      onClick={() => navigate(`/admin/view-user/${u.id}`)} 
-      className="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
-      title="View Details"
-    >
-      <Eye size={18} />
-    </button>
+                        <div className="flex items-center justify-center gap-1">
+                          {u.status === 'active' ? (
+                            <div className="flex items-center text-green-600 gap-1">
+                              <CheckCircle size={18} />
+                              <span className="font-bold text-xs uppercase">Active</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center text-red-600 gap-1">
+                              <XCircle size={18} />
+                              <span className="font-bold text-xs uppercase">Inactive</span>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex justify-center gap-3">
+                          <button 
+                            onClick={() => navigate(`/admin/view-user/${u.id}`)} 
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                            title="View Details"
+                          >
+                            <Eye size={18} />
+                          </button>
 
-    {/* Profile Icon (Update Profile) */}
-    <button 
-      onClick={() => navigate(`/admin/edit-profile/:id/${u.id}`)} // Adjust route as needed
-      className="p-2 text-green-600 hover:bg-green-50 rounded-full transition-colors"
-      title="User Profile"
-    >
-      <User size={18} />
-    </button>
-
-    {/* Delete Icon */}
-    <button 
-      onClick={() => handleDelete(u.id)} // Ensure you have a delete handler
-      className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors"
-      title="Delete User"
-    >
-      <Trash2 size={18} />
-    </button>
-  </div>
-</td>
+                          <button 
+                            onClick={() => navigate(`/admin/edit-profile/:id/${u.id}`)} 
+                            className="p-2 text-green-600 hover:bg-green-50 rounded-full transition-colors"
+                            title="User Profile"
+                          >
+                            <User size={18} />
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -252,7 +315,6 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-          {/* Right Column: Project Hub */}
           <div className="lg:col-span-1">
             <h2 className={`text-xl font-black mb-6 flex items-center gap-2 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
               <Briefcase size={20} className="text-blue-600" /> Project Hub

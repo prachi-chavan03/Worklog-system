@@ -4,7 +4,7 @@ import db from '../config/db.js';
 export const getAllUsers = async (req, res) => {
   try {
     const [rows] = await db.execute(
-      'SELECT id, full_name, email, designation, role, employee_id FROM users ORDER BY id DESC'
+      'SELECT id, full_name, email, designation, role, employee_id,status FROM users ORDER BY id DESC'
     );
     res.status(200).json(rows);
   } catch (error) {
@@ -244,4 +244,23 @@ export const getUserById = async (req, res) => {
     console.error("❌ Fetch User By ID Error:", error.message);
     res.status(500).json({ message: "Internal Server Error" });
   }
+};
+
+//Pending reset request
+export const getPendingResetRequests = async (req, res) => {
+    try {
+        // Updated query to use 'created_at' and the correct JOIN
+        const sql = `
+            SELECT pr.id, pr.email, pr.status, pr.created_at, u.full_name, u.id as user_id 
+            FROM password_requests pr
+            LEFT JOIN users u ON pr.email = u.email
+            WHERE pr.status = 'Pending' 
+            ORDER BY pr.created_at DESC`;
+
+        const [rows] = await db.execute(sql);
+        res.status(200).json(rows);
+    } catch (err) {
+        console.error("SQL Error:", err.message);
+        res.status(500).json({ error: err.message });
+    }
 };

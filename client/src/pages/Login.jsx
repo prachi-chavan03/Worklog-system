@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";      
-import { Lock, Mail, Eye, EyeOff } from "lucide-react";      
+import { Lock, Mail, Eye, EyeOff,X} from "lucide-react";      
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
   const navigate = useNavigate();
 
   // Load remembered email on startup
@@ -18,7 +20,7 @@ const Login = () => {
       setRememberMe(true);
     }
   }, []);
-// Inside Login.jsx
+
 const handleLogin = async (e) => {
   e.preventDefault();
 
@@ -51,13 +53,42 @@ const handleLogin = async (e) => {
         navigate('/user-home'); 
       }
     } else {
-      toast.error(data.message);
+      // This 'data.message' will now correctly display "Your account is deactivated..." 
+      // because the backend is sending that specific string in the JSON.
+      toast.error(data.message || "Invalid credentials");
     }
   } catch (error) {
+    // This catches network errors (e.g., server is down)
+    console.error("Login Error:", error);
     toast.error("Server connection failed");
   }
 };
 
+//forget password---reset 
+const handleInformAdmin = async (e) => {
+  e.preventDefault();
+  if (!resetEmail) return toast.error("Please enter your email");
+
+  try {
+    const response = await fetch('http://localhost:5000/api/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: resetEmail })
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      toast.success("Admin has been informed!");
+      setIsModalOpen(false);
+      setResetEmail('');
+    } else {
+      toast.error(data.message || "Email not found");
+    }
+  } catch (error) {
+    toast.error("Server error. Try again later.");
+  }
+};
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
@@ -141,10 +172,14 @@ const handleLogin = async (e) => {
                 </label>
               </div>
 
-              <div className="text-sm">
-                <a href="#" className="font-bold text-blue-600 hover:text-blue-500 transition-colors">
+             <div className="text-sm">
+                <button 
+                  type="button"
+                  onClick={() => setIsModalOpen(true)}
+                  className="font-bold text-blue-600 hover:text-blue-500 transition-colors"
+                >
                   Forgot password?
-                </a>
+                </button>
               </div>
             </div>
 
@@ -167,6 +202,52 @@ const handleLogin = async (e) => {
           </div>
         </div>
       </div>
+      {/* Forgot Password Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold text-gray-900">Reset Request</h3>
+                <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                  <X size={20} />
+                </button>
+              </div>
+              <p className="text-sm text-gray-600 mb-6">
+                Enter your registered email. We will notify the admin to reset your password.
+              </p>
+              <form onSubmit={handleInformAdmin}>
+                <div className="mb-6">
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Registered Email</label>
+                  <input
+                    type="email"
+                    required
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                    placeholder="yourname@company.com"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                  />
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsModalOpen(false)}
+                    className="flex-1 px-4 py-3 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 px-4 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all active:scale-95"
+                  >
+                    Inform Admin
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
