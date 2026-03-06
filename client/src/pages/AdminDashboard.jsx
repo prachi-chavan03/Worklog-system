@@ -13,6 +13,9 @@ const AdminDashboard = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [users, setUsers] = useState([]);
   const [darkMode, setDarkMode] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+const [totalPages, setTotalPages] = useState(1);
+const [totalUsersCount, setTotalUsersCount] = useState(0); // For the 'Total Users' stat card
   
   // Project State
   const [projects, setProjects] = useState([]);
@@ -33,9 +36,15 @@ console.log("Check this in Console:", currentUser); // ADD THIS LINE
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const userRes = await fetch('http://localhost:5000/api/admin/users');
+        const userRes = await fetch(`http://localhost:5000/api/admin/users?page=${currentPage}&limit=7`);
         const userData = await userRes.json();
-        if (userRes.ok) setUsers(userData);
+
+if (userRes.ok) {
+  // IMPORTANT: Since backend now sends an object, we access userData.users
+  setUsers(userData.users); 
+  setTotalPages(userData.totalPages);
+  setTotalUsersCount(userData.totalUsers);
+}
 
         const projRes = await fetch('http://localhost:5000/api/tasks/projects');
         const projData = await projRes.json();
@@ -56,7 +65,7 @@ console.log("Check this in Console:", currentUser); // ADD THIS LINE
       }
     };
     fetchData();
-  }, []);
+  }, [currentPage]);
 
   const handleAddProject = async () => {
     if (!newProject.trim()) return toast.error("Project name required");
@@ -309,7 +318,7 @@ console.log("Check this in Console:", currentUser); // ADD THIS LINE
                 <tbody className="divide-y divide-gray-100">
                   {users.map((u, index) => (
                     <tr key={u.id} className={`transition-colors ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-blue-50/20'}`}>
-                      <td className="px-6 py-4 text-sm font-bold text-gray-400">#{index + 1}</td>
+                      <td className="px-6 py-4 text-sm font-bold text-gray-400">#{(currentPage - 1) * 7 + (index + 1)}</td>
                      <td className="px-6 py-4">
 
 
@@ -375,6 +384,27 @@ console.log("Check this in Console:", currentUser); // ADD THIS LINE
                   ))}
                 </tbody>
               </table>
+              <div className={`flex justify-between items-center mt-6 px-4 py-3 rounded-xl ${darkMode ? 'bg-gray-800' : 'bg-white shadow-sm border border-gray-100'}`}>
+  <button 
+    disabled={currentPage === 1}
+    onClick={() => setCurrentPage(prev => prev - 1)}
+    className="px-4 py-2 bg-blue-600 text-white rounded-lg disabled:opacity-30 disabled:cursor-not-allowed font-bold text-xs transition-all hover:bg-blue-700"
+  >
+    Previous
+  </button>
+
+  <span className={`text-xs font-black uppercase tracking-widest ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+    Page {currentPage} of {totalPages}
+  </span>
+
+  <button 
+    disabled={currentPage === totalPages}
+    onClick={() => setCurrentPage(prev => prev + 1)}
+    className="px-4 py-2 bg-blue-600 text-white rounded-lg disabled:opacity-30 disabled:cursor-not-allowed font-bold text-xs transition-all hover:bg-blue-700"
+  >
+    Next
+  </button>
+</div>
             </div>
           </div>
 

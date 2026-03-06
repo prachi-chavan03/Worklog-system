@@ -2,16 +2,37 @@ import db from '../config/db.js';
 import nodemailer from 'nodemailer';
 
 
-// 1. GET ALL USERS (Added designation to selection)
+// 1. GET ALL USERS (Final Fix for 500 Error)
 export const getAllUsers = async (req, res) => {
+  // Force conversion to Integer
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 7;
+  const offset = (page - 1) * limit;
+
   try {
-    const [rows] = await db.execute(
-      'SELECT id, full_name, email, designation, role, employee_id,status FROM users ORDER BY id DESC'
+    // CHANGE: Use db.query instead of db.execute for better LIMIT/OFFSET support
+    // The [limit, offset] must be passed as numbers
+    const [rows] = await db.query(
+      'SELECT id, full_name, email, designation, role, employee_id, status FROM users ORDER BY id DESC LIMIT ? OFFSET ?',
+      [limit, offset]
     );
-    res.status(200).json(rows);
+
+    // Get total count for your "Total Users" stat card
+    const [totalRows] = await db.query('SELECT COUNT(*) as count FROM users');
+    const totalCount = totalRows[0].count;
+    const totalPages = Math.ceil(totalCount / limit);
+
+    // This sends the object your useEffect is already coded to receive
+    res.status(200).json({
+      users: rows,
+      totalPages: totalPages,
+      totalUsers: totalCount
+    });
+
   } catch (error) {
-    console.error("❌ Fetch Users Error:", error.message);
-    res.status(500).json({ message: "Failed to fetch users", error: error.message });
+    // This will show the error in your terminal so you can see why it's 500
+    console.error("❌ DATABASE CRASH:", error.message);
+    res.status(500).json({ message: "Internal Server Error", error: error.message });
   }
 };
 // 2. ADD USER (Updated logic for Non-Employee & ID formatting)
