@@ -1,4 +1,6 @@
 import db from '../config/db.js';
+import nodemailer from 'nodemailer';
+
 
 // 1. GET ALL USERS (Added designation to selection)
 export const getAllUsers = async (req, res) => {
@@ -12,27 +14,45 @@ export const getAllUsers = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch users", error: error.message });
   }
 };
-
-// 2. ADD USER (Added designation to insertion)
+// 2. ADD USER (Updated logic for Non-Employee & ID formatting)
 export const addUser = async (req, res) => {
-  const { full_name, email, password, role, designation } = req.body; // Added designation
+  const { full_name, email, password, isEmployee, isAdmin, designation } = req.body;
+  
   try {
-    let employee_id = null;
-    if (role === 'employee') {
-      const [rows] = await db.execute('SELECT COUNT(*) as count FROM users WHERE role = "employee"');
-      employee_id = rows[0].count + 1; 
+    // 1. Determine Role: Admin takes priority for permissions
+    let finalRole = 'employee';
+    
+    if (isAdmin) {
+      finalRole = 'admin';
+    } 
+    // CHANGE: If both boxes are unchecked, assign 'non-employee' role
+    else if (!isEmployee && !isAdmin) {
+      finalRole = 'non-employee';
     }
 
-    // Updated query to include designation column
-    const query = 'INSERT INTO users (full_name, email, password, role, employee_id, designation) VALUES (?, ?, ?, ?, ?, ?)';
-    await db.execute(query, [full_name, email, password, role, employee_id, designation || null]);
-    
-    res.status(201).json({ success: true, message: "User created successfully" });
+    // 2. Generate Employee ID ONLY if "isEmployee" is ticked
+    // CHANGE: Default to 'NA' string so the "Eye" button logic works correctly
+    let employee_id = 'NA'; 
+
+    if (isEmployee) {
+      // Logic to get the next numeric ID based on existing users
+      // CHANGE: Filter out 'NA' so the count reflects actual employees only
+      const [rows] = await db.execute('SELECT COUNT(*) as count FROM users WHERE employee_id IS NOT NULL AND employee_id != "NA"');
+      employee_id = rows[0].count + 1;
+    }
+
+    // 3. Database Insertion
+    const sql = `INSERT INTO users (full_name, email, password, role, employee_id, designation) VALUES (?, ?, ?, ?, ?, ?)`;
+    await db.execute(sql, [full_name, email, password, finalRole, employee_id, designation]);
+
+    res.status(201).json({ message: "User created successfully" });
+
   } catch (error) {
-    console.error("❌ Add User Error:", error.message);
-    res.status(500).json({ message: "Database error" });
+    console.error("Add User Error:", error.message);
+    res.status(500).json({ error: error.message });
   }
 };
+
 
 // 3. UPDATE PROFILE (Added designation to update logic)
 export const updateProfile = async (req, res) => {
@@ -78,47 +98,40 @@ export const addProject = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
-
-// update user profile by admin only
 export const updateUserProfile = async (req, res) => {
     try {
         const { id } = req.params;
-        // Added 'status' to the destructured body
-        const { full_name, email, designation, role, status, password } = req.body;
+        const { full_name, email, designation, role, status, password, employee_id } = req.body;
 
         let sql;
         let params;
 
-        // If password is provided, include it in the update (along with status)
+        // If password is provided, update it. If not, don't touch the password column.
         if (password && password.trim() !== "") {
-            sql = `UPDATE users SET full_name = ?, email = ?, designation = ?, role = ?, status = ?, password = ? WHERE id = ?`;
-            params = [full_name, email, designation, role, status, password, id];
+            sql = `UPDATE users SET full_name=?, email=?, designation=?, role=?, status=?, employee_id=?, password=? WHERE id=?`;
+            params = [full_name, email, designation, role, status, employee_id, password, id];
         } else {
-            // Otherwise, update profile information including the new status
-            sql = `UPDATE users SET full_name = ?, email = ?, designation = ?, role = ?, status = ? WHERE id = ?`;
-            params = [full_name, email, designation, role, status, id];
+            sql = `UPDATE users SET full_name=?, email=?, designation=?, role=?, status=?, employee_id=? WHERE id=?`;
+            params = [full_name, email, designation, role, status, employee_id, id];
         }
 
-        const [result] = await db.execute(sql, params);
+        // Final safety check: ensure no 'undefined' reaches the DB driver
+        const sanitizedParams = params.map(p => p === undefined ? null : p);
 
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ message: "User not found" });
-        }
-
-        res.status(200).json({ message: "User profile updated successfully" });
+        await db.execute(sql, sanitizedParams);
+        res.status(200).json({ message: "Update successful" });
     } catch (err) {
         console.error("Update Error:", err.message);
         res.status(500).json({ error: err.message });
     }
 };
-
 // 5. GET PENDING LOGS SUMMARY (New)
 export const getPendingLogsSummary = async (req, res) => {
   try {
-    // 1. Fetch employees (exclude admins)
-    const [users] = await db.execute(
-      "SELECT id, full_name, email, employee_id FROM users WHERE role != 'admin'"
-    );
+    // 1. Fetch ONLY users with a valid numeric ID (Excludes 'NA' and NULL)
+const [users] = await db.execute(
+  "SELECT id, full_name, email, employee_id FROM users WHERE employee_id IS NOT NULL AND employee_id != 'NA'"
+);
     
     // 2. Generate Mon-Fri dates for the last 14 days
     const businessDays = [];

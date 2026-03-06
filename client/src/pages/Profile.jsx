@@ -20,6 +20,7 @@ const Profile = () => {
     email: '',
     designation: '',
     role: '',
+    isAdmin: false,
     status: 'active', 
     password: '',
     confirmPassword: ''
@@ -33,6 +34,7 @@ const Profile = () => {
       toast.error("Passwords do not match!");
       return;
     }
+    const selectedRole = formData.isAdmin ? 'admin' : 'employee';
 
     try {
       // FIX 1: Ensure no values are 'undefined' before sending to backend
@@ -40,9 +42,10 @@ const Profile = () => {
         full_name: formData.full_name || '',
         email: formData.email || '',
         designation: formData.designation || '',
-        role: formData.role || '',
+       role: selectedRole,
         status: formData.status || 'active',
-        password: formData.password || ''
+        password: formData.password || '',
+       employee_id: userData.employee_id || userData.userEmployeeId
       };
 
       const response = await fetch(`http://localhost:5000/api/admin/update-user/${targetUserId}`, {
@@ -79,6 +82,7 @@ const Profile = () => {
               designation: data.userDesignation || '',
               role: data.userRole || 'Employee',
               status: data.userStatus || 'active', // FIX 2: Default fallback
+              employee_id: data.userEmployeeId,
               id: targetUserId
             };
             
@@ -88,6 +92,8 @@ const Profile = () => {
               email: fetchedUser.email,
               designation: fetchedUser.designation,
               role: fetchedUser.role,
+              isAdmin: (data.userRole || "").toLowerCase() === 'admin',
+              
               status: fetchedUser.status, 
               password: '',
               confirmPassword: ''
@@ -105,6 +111,7 @@ const Profile = () => {
             email: savedUser.email,
             designation: savedUser.designation || '',
             role: savedUser.role,
+            isAdmin: fetchedUser.role.toLowerCase() === 'admin',
             status: 'active', // Added safety
             password: '',
             confirmPassword: ''
@@ -228,6 +235,22 @@ const Profile = () => {
                 </div>
               </div>
             </div>
+
+            {/* ADMIN CHECKBOX COMPONENT */}
+{isEditMode && isAdminEditingOthers && (
+  <div className="flex items-center gap-3 p-4 bg-purple-50 rounded-xl border border-purple-100 mt-2">
+    <input 
+      type="checkbox" 
+      id="adminCheck" 
+      checked={formData.isAdmin} 
+      className="w-5 h-5 accent-purple-600 cursor-pointer"
+      onChange={(e) => setFormData({...formData, isAdmin: e.target.checked})} 
+    />
+    <label htmlFor="adminCheck" className="text-sm font-bold text-purple-800 cursor-pointer">
+      Assign Admin Role (Access to full management)
+    </label>
+  </div>
+)}
 
             {/* ACCOUNT STATUS SECTION */}
             {isEditMode && isAdminEditingOthers && (

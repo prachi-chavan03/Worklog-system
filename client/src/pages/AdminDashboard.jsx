@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { 
-  UserPlus, LogOut, User, Eye, Trash2, 
+  UserPlus, LogOut, User, Eye,EyeOff, Trash2, 
   Users, Clock, ClipboardList, Menu, X, 
   Plus, Sun, Moon, Briefcase, ChevronDown, Mail, AlertCircle,
   CheckCircle, XCircle, Check// Added these for the status icons
@@ -27,7 +27,8 @@ const AdminDashboard = () => {
   const [resetRequests, setResetRequests] = useState([]);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [isResetDropdownOpen, setIsResetDropdownOpen] = useState(false);
-
+const currentUser = JSON.parse(localStorage.getItem('user')) || {};
+console.log("Check this in Console:", currentUser); // ADD THIS LINE
   // Fetch Users, Projects, and Pending Logs
   useEffect(() => {
     const fetchData = async () => {
@@ -123,6 +124,14 @@ const AdminDashboard = () => {
           <button onClick={() => setDarkMode(!darkMode)} className={`p-2 rounded-lg transition-colors ${darkMode ? 'bg-gray-700 text-yellow-400 hover:bg-gray-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
             {darkMode ? <Sun size={18} /> : <Moon size={18} />}
           </button>
+          {currentUser.employee_id && (
+    <button 
+      onClick={() => navigate('/user-home')} 
+      className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition-all shadow-md"
+    >
+      <ClipboardList size={18} /> My Daily Tasks
+    </button>
+  )}
           <button onClick={() => navigate('/profile')} className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all ${darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-100'}`}>
             <User size={18} className="text-blue-600" /> Profile
           </button>
@@ -301,10 +310,17 @@ const AdminDashboard = () => {
                   {users.map((u, index) => (
                     <tr key={u.id} className={`transition-colors ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-blue-50/20'}`}>
                       <td className="px-6 py-4 text-sm font-bold text-gray-400">#{index + 1}</td>
-                      <td className="px-6 py-4">
-                        <div className={`font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{u.full_name}</div>
-                        <div className="text-[10px] text-gray-400">EMP ID: {u.employee_id} | {u.email}</div>
-                      </td>
+                     <td className="px-6 py-4">
+
+
+  <div className={`font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{u.full_name}</div>
+  <div className="text-[10px] text-gray-400">
+    {/* MODIFIED LINE BELOW */}
+    EMP ID: {u.employee_id || 'N/A'} | {u.email} | <span className="font-black text-blue-500 uppercase">{u.role}</span>
+  </div>
+</td>
+
+
                       {/* Status Column - Corrected the variable from users to u */}
                       <td className="px-6 py-4">
                         <div className="flex items-center justify-center gap-1">
@@ -324,12 +340,27 @@ const AdminDashboard = () => {
                       <td className="px-6 py-4">
                         <div className="flex justify-center gap-3">
                           <button 
-                            onClick={() => navigate(`/admin/view-user/${u.id}`)} 
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
-                            title="View Details"
-                          >
-                            <Eye size={18} />
-                          </button>
+  onClick={() => {
+    // Only navigate if employee_id is NOT 'NA' and NOT null
+    if (u.employee_id && u.employee_id !== 'NA') {
+      navigate(`/admin/view-user/${u.id}`);
+    }
+  }} 
+  disabled={!u.employee_id || u.employee_id === 'NA'} // Disables the button logic
+  className={`p-2 rounded-full transition-colors ${
+    !u.employee_id || u.employee_id === 'NA' 
+      ? "text-gray-300 cursor-not-allowed" // Style for "not workable"
+      : "text-blue-600 hover:bg-blue-50"    // Normal style
+  }`}
+  title={!u.employee_id || u.employee_id === 'NA' ? "For Employee Only" : "View Details"}
+>
+  {/* If ID is NA or missing, show EyeOff (closed eye), else show regular Eye */}
+  {(!u.employee_id || u.employee_id === 'NA') ? (
+    <EyeOff size={18} />
+  ) : (
+    <Eye size={18} />
+  )}
+</button>
 
                           <button 
                             onClick={() => navigate(`/admin/edit-profile/:id/${u.id}`)} 

@@ -44,6 +44,7 @@ export const login = async (req, res) => {
         name: user.full_name,
         email: user.email,
         role: user.role,
+        employee_id: user.employee_id,
         designation: user.designation // ADDED THIS LINE
       }
     });

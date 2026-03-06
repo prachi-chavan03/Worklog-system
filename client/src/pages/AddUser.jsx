@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UserPlus, ArrowLeft, Save, Briefcase } from 'lucide-react'; 
+import { UserPlus, ArrowLeft, Save, ShieldCheck } from 'lucide-react'; 
 import toast from 'react-hot-toast';
 
 const AddUser = () => {
@@ -11,7 +11,8 @@ const AddUser = () => {
     designation: '', 
     password: '',
     confirmPassword: '',
-    isEmployee: true
+    isEmployee: true,
+    isAdmin: false // New state for admin check
   });
 
   const handleSubmit = async (e) => {
@@ -23,6 +24,7 @@ const AddUser = () => {
 
     try {
       const response = await fetch('http://localhost:5000/api/admin/add-user', {
+        //
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -30,7 +32,9 @@ const AddUser = () => {
           email: formData.email,
           designation: formData.designation, 
           password: formData.password,
-          role: formData.isEmployee ? 'employee' : 'non-employee'
+          // Sending both flags so the backend can determine role and employee_id
+          isEmployee: formData.isEmployee,
+          isAdmin: formData.isAdmin
         }),
       });
 
@@ -121,17 +125,33 @@ const AddUser = () => {
               </div>
             </div>
 
-            <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-xl">
-              <input 
-                type="checkbox" 
-                id="roleCheck" 
-                checked={formData.isEmployee} 
-                className="w-5 h-5 accent-blue-600"
-                onChange={(e) => setFormData({...formData, isEmployee: e.target.checked})} 
-              />
-              <label htmlFor="roleCheck" className="text-sm font-bold text-blue-800 cursor-pointer">
-                Register as Employee (Uncheck for Non-Employee)
-              </label>
+            {/* Checkbox Section */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-xl border border-blue-100">
+                <input 
+                  type="checkbox" 
+                  id="roleCheck" 
+                  checked={formData.isEmployee} 
+                  className="w-5 h-5 accent-blue-600"
+                  onChange={(e) => setFormData({...formData, isEmployee: e.target.checked})} 
+                />
+                <label htmlFor="roleCheck" className="text-sm font-bold text-blue-800 cursor-pointer">
+                  Register as Employee (Access to self-task entry)
+                </label>
+              </div>
+
+              <div className="flex items-center gap-3 p-4 bg-purple-50 rounded-xl border border-purple-100">
+                <input 
+                  type="checkbox" 
+                  id="adminCheck" 
+                  checked={formData.isAdmin} 
+                  className="w-5 h-5 accent-purple-600"
+                  onChange={(e) => setFormData({...formData, isAdmin: e.target.checked})} 
+                />
+                <label htmlFor="adminCheck" className="text-sm font-bold text-purple-800 cursor-pointer">
+                  Assign Admin Role (Access to full management)
+                </label>
+              </div>
             </div>
 
             <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-xl shadow-lg shadow-blue-200 transition-all flex justify-center items-center gap-2">

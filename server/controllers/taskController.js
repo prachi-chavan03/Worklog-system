@@ -1,19 +1,18 @@
 import db from '../config/db.js';
 
-
-// 1. FETCH LOGS (Updated to include User Registration Details)
+// 1. FETCH LOGS 
 export const getUserDetails = async (req, res) => {
     try {
         const { userId } = req.params;
         
-        // We now start FROM 'users' to ensure we get a result even if logs are empty
         const sql = `
             SELECT 
                 u.full_name AS userName,
                 u.email AS userEmail,
                 u.role AS userRole,
                 u.designation AS userDesignation,
-                u.status AS userStatus, -- Added this to fetch user status
+                u.status AS userStatus,
+                u.employee_id,
                 wl.work_date, 
                 wl.hours_worked, 
                 wl.task_description, 
@@ -29,19 +28,17 @@ export const getUserDetails = async (req, res) => {
 
         const [rows] = await db.execute(sql, [userId]);
 
-        // If no user is found at all in the users table
         if (rows.length === 0) {
             return res.status(404).json({ error: "User not found" });
         }
 
-        // Structure the response so the frontend can easily find user details
         const responseData = {
             userName: rows[0].userName,
             userEmail: rows[0].userEmail,
             userRole: rows[0].userRole,
             userDesignation: rows[0].userDesignation,
-            userStatus: rows[0].userStatus, // <-- CRITICAL: Ensure this is here
-            // If work_date is null, it means the LEFT JOIN found no logs
+            userStatus: rows[0].userStatus,
+            userEmployeeId: rows[0].employee_id, 
             logs: rows[0].work_date ? rows : [] 
         };
 
@@ -51,7 +48,6 @@ export const getUserDetails = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
-
 
 // 2. SAVE/UPDATE ENTRY
 export const saveDayEntry = async (req, res) => {
@@ -64,10 +60,8 @@ export const saveDayEntry = async (req, res) => {
             if (projects.length > 0) projectId = projects[0].id;
         }
 
-        // --- CHANGE START: Clear description if it's not a working day ---
         const finalDescription = (day_type === "Working") ? (task_description || "") : null;
-        // --- CHANGE END ---
-
+    
         const sql = `
             INSERT INTO work_logs 
                 (user_id, project_id, module_name, work_date, hours_worked, task_description, is_wfh, day_type) 
@@ -86,7 +80,7 @@ export const saveDayEntry = async (req, res) => {
             module_name || null, 
             work_date, 
             hours_worked, 
-            finalDescription, // Use the cleared description here
+            finalDescription, 
             is_wfh ? 1 : 0,
             day_type || "Working" 
         ]);
@@ -124,9 +118,7 @@ export const submitWeeklySheet = async (req, res) => {
             log.module_name || null,
             log.work_date,
             log.hours_worked,
-            // --- CHANGE START: Clear description for non-working days in bulk submit ---
             (log.day_type === "Working") ? (log.task_description || "") : null,
-            // --- CHANGE END ---
             log.is_wfh ? 1 : 0,
             log.day_type || "Working"
         ]);
@@ -158,58 +150,7 @@ export const submitWeeklySheet = async (req, res) => {
     }
 };
 
-// 5.update-user logic with this:
-export const updateUserProfile = async (req, res) => {
-    try {
-        // 1. Get ID from params
-        const { id } = req.params; 
-        
-        // 2. Get data from body
-        const { full_name, email, designation, role, status, password } = req.body;
-
-        // DEBUG: This will show you exactly which one is 'undefined' in your terminal
-        console.log("DEBUG VALUES:", { id, full_name, email, status });
-
-        if (!id || id === 'undefined') {
-            return res.status(400).json({ error: "User ID is required and cannot be undefined" });
-        }
-
-        let sql;
-        let params;
-
-        if (password && password.trim() !== "") {
-            sql = `UPDATE users SET full_name = ?, email = ?, designation = ?, role = ?, status = ?, password = ? WHERE id = ?`;
-            // Use || fallbacks to prevent 'undefined'
-            params = [
-                full_name || '', 
-                email || '', 
-                designation || '', 
-                role || 'Employee', 
-                status || 'active', 
-                password, 
-                id
-            ];
-        } else {
-            sql = `UPDATE users SET full_name = ?, email = ?, designation = ?, role = ?, status = ? WHERE id = ?`;
-            params = [
-                full_name || '', 
-                email || '', 
-                designation || '', 
-                role || 'Employee', 
-                status || 'active', 
-                id
-            ];
-        }
-
-        const [result] = await db.execute(sql, params);
-        res.status(200).json({ message: "Success" });
-
-    } catch (err) {
-        console.error("Update Error:", err.message);
-        res.status(500).json({ error: err.message });
-    }
-};
-//Fetch logs for a specific user 
+ // 5. Fetch logs for a specific user 
 export const getUserLogs = async (req, res) => {
     try {
         const { userId } = req.params;

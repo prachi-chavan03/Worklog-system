@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Eye, User, Users, Briefcase, LogOut, UserCircle, Filter } from 'lucide-react';
+import { Eye,EyeOff, User, Users, Briefcase, LogOut, UserCircle, Filter } from 'lucide-react';
 
 const ManagerDashboard = () => {
   const navigate = useNavigate();
@@ -133,7 +133,28 @@ const ManagerDashboard = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4 flex justify-center gap-3">
-                        <button onClick={() => navigate(`/view-logs/${u.id}`)} className="p-2.5 text-blue-500 hover:bg-blue-50 rounded-xl" title="View Logs"><Eye size={20} /></button>
+                                              <button 
+  onClick={() => {
+    // Only navigate if employee_id is NOT 'NA' and NOT null
+    if (u.employee_id && u.employee_id !== 'NA') {
+      navigate(`/view-logs/${u.id}`);
+    }
+  }} 
+  disabled={!u.employee_id || u.employee_id === 'NA'} // Disables the button logic
+  className={`p-2 rounded-full transition-colors ${
+    !u.employee_id || u.employee_id === 'NA' 
+      ? "text-gray-300 cursor-not-allowed" // Style for "not workable"
+      : "text-blue-600 hover:bg-blue-50"    // Normal style
+  }`}
+  title={!u.employee_id || u.employee_id === 'NA' ? "For Employee Only" : "View Details"}
+>
+  {/* If ID is NA or missing, show EyeOff (closed eye), else show regular Eye */}
+  {(!u.employee_id || u.employee_id === 'NA') ? (
+    <EyeOff size={18} />
+  ) : (
+    <Eye size={18} />
+  )}
+</button>
                         <button onClick={() => navigate(`/view-profile/${u.id}`)} className="p-2.5 text-emerald-500 hover:bg-emerald-50 rounded-xl" title="View Profile"><User size={20} /></button>
                       </td>
                     </tr>
