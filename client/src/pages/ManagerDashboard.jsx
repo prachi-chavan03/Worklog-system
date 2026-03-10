@@ -8,10 +8,42 @@ const ManagerDashboard = () => {
   const [users, setUsers] = useState([]);
   const [projects, setProjects] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
+const [currentPage, setCurrentPage] = useState(1);
+const [totalPages, setTotalPages] = useState(1);
+const [totalUsersCount, setTotalUsersCount] = useState(0);
+const [showOnlyEmployees, setShowOnlyEmployees] = useState(false);
+
+
+
+useEffect(() => {
+  const savedUser = JSON.parse(localStorage.getItem('user'));
+  setCurrentUser(savedUser);
+
+  const fetchData = async () => {
+    try {
+      // Add pagination params to the URL
+      const [uRes, pRes] = await Promise.all([
+        fetch(`http://localhost:5000/api/admin/users?page=${currentPage}&limit=7`),
+        fetch('http://localhost:5000/api/tasks/projects')
+      ]);
+
+      if (uRes.ok) {
+        const data = await uRes.json();
+        // Extract from the object just like in AdminDash
+        setUsers(Array.isArray(data.users) ? data.users : []);
+        setTotalPages(data.totalPages || 1);
+        setTotalUsersCount(data.totalUsers || 0);
+      }
+      // ... rest of your project fetch logic
+    } catch (error) {
+      toast.error("Failed to load data");
+    }
+  };
+  fetchData();
+}, [currentPage]); // Re-run when page changes
   
   // NEW STATE: For the employee toggle
-  const [showOnlyEmployees, setShowOnlyEmployees] = useState(false);
-
+  
   useEffect(() => {
     const savedUser = JSON.parse(localStorage.getItem('user'));
     setCurrentUser(savedUser);
@@ -87,7 +119,7 @@ const displayUsers = Array.isArray(users)
           <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-200 flex justify-between items-center">
             <div>
               <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Displaying Users</p>
-              <p className="text-3xl font-black mt-1">{displayUsers.length}</p>
+              <p className="text-3xl font-black mt-1">{totalUsersCount}</p>
             </div>
             <div className="p-3 bg-blue-50 rounded-2xl text-blue-600">
               <Users size={24} />
@@ -135,7 +167,7 @@ const displayUsers = Array.isArray(users)
                 <tbody className="divide-y divide-slate-50">
                   {displayUsers.map((u, index) => (
                     <tr key={u.id} className="hover:bg-blue-50/30 transition-colors group">
-                      <td className="px-6 py-4 text-sm font-bold text-slate-400 text-center">{(index + 1).toString().padStart(2, '0')}</td>
+                      <td className="px-6 py-4 text-sm font-bold text-slate-400 text-center">{(currentPage - 1) * 7 + (index + 1)}</td>
                       <td className="px-6 py-4">
                         <div className="font-bold text-slate-700 group-hover:text-blue-600 transition-colors">{u.full_name}</div>
                         <div className="text-[11px] text-slate-400 font-medium">{u.email}</div>
@@ -175,7 +207,33 @@ const displayUsers = Array.isArray(users)
                 </tbody>
               </table>
             </div>
+
+
+            {/* Pagination Controls */}
+<div className="flex justify-between items-center mt-6 px-6 py-4 bg-slate-50 border-t border-slate-100">
+  <button 
+    disabled={currentPage === 1}
+    onClick={() => setCurrentPage(prev => prev - 1)}
+    className="px-4 py-2 bg-blue-600 text-white rounded-xl disabled:opacity-30 disabled:cursor-not-allowed font-bold text-xs transition-all hover:bg-blue-700 shadow-md"
+  >
+    Previous
+  </button>
+
+  <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">
+    Page {currentPage} of {totalPages}
+  </span>
+
+  <button 
+    disabled={currentPage === totalPages}
+    onClick={() => setCurrentPage(prev => prev + 1)}
+    className="px-4 py-2 bg-blue-600 text-white rounded-xl disabled:opacity-30 disabled:cursor-not-allowed font-bold text-xs transition-all hover:bg-blue-700 shadow-md"
+  >
+    Next
+  </button>
+</div>
           </div>
+
+
 
           <div className="lg:col-span-1">
             <h2 className="text-xl font-black mb-6 text-slate-700">Project List</h2>

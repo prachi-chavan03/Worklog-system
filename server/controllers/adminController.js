@@ -161,7 +161,7 @@ export const getPendingLogsSummary = async (req, res) => {
     // 2. Generate Mon-Fri dates for the last 14 days
     const businessDays = [];
     const today = new Date();
-    for (let i = 0; i < 14; i++) {
+    for (let i = 0; i < 10; i++) {
       let d = new Date();
       d.setDate(today.getDate() - i);
       let dayOfWeek = d.getDay();
