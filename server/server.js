@@ -9,7 +9,7 @@ const app = express();
 
 // --- UPDATED CORS SECTION ---
 const allowedOrigins = [
-  process.env.FRONTEND_URL, // This is your Vercel link from Render dashboard
+  'https://worklog-system.vercel.app/', // This is your Vercel link from Render dashboard
   'http://localhost:5173',  // Keep this for local testing
 ];
 
