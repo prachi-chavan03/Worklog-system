@@ -4,6 +4,7 @@ import { ArrowLeft, Calendar, Eye, X, User } from 'lucide-react';
 
 const ViewLogs = () => {
   const { id } = useParams(); 
+  const API_BASE_URL = import.meta.env.VITE_API_URL;
   const navigate = useNavigate();
   const [employeeName, setEmployeeName] = useState("");
   const [selectedWeek, setSelectedWeek] = useState(0);
@@ -17,17 +18,18 @@ const ViewLogs = () => {
   const fetchData = async () => {
     try {
       // 1. Fetch projects
-      const projRes = await fetch('http://localhost:5000/api/tasks/projects');
+const projRes = await fetch(`${API_BASE_URL}/tasks/projects`);
+
       const projData = await projRes.json();
       if (projRes.ok) setDbProjects(projData);
 
       // 2. Fetch User Info (Function 2 - Returns Object)
-      const infoRes = await fetch(`http://localhost:5000/api/tasks/get-user-info/${id}`);
+     const infoRes = await fetch(`${API_BASE_URL}/tasks/get-user-info/${id}`);
       const infoData = await infoRes.json();
       if (infoRes.ok) setEmployeeName(infoData.full_name);
 
       // 3. Fetch User Logs (Function 1 - Returns Array)
-      const logRes = await fetch(`http://localhost:5000/api/tasks/get-logs/${id}`);
+      const logRes = await fetch(`${API_BASE_URL}/tasks/get-logs/${id}`);
       const logDataArray = await logRes.json();
 
       if (logRes.ok && Array.isArray(logDataArray)) {

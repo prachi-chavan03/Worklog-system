@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 
 const Profile = () => {
   const navigate = useNavigate();
+  const API_BASE_URL = import.meta.env.VITE_API_URL;
   const { id, userId } = useParams(); 
   const targetUserId = userId || id; 
 
@@ -48,7 +49,7 @@ const Profile = () => {
        employee_id: userData.employee_id || userData.userEmployeeId
       };
 
-      const response = await fetch(`http://localhost:5000/api/admin/update-user/${targetUserId}`, {
+      const response = await fetch(`${API_BASE_URL}/admin/update-user/${targetUserId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload) // Send payload instead of formData directly
@@ -72,7 +73,7 @@ const Profile = () => {
     const fetchUserData = async () => {
       if (targetUserId) {
         try {
-          const response = await fetch(`http://localhost:5000/api/tasks/get-user-info/${targetUserId}`);
+          const response = await fetch(`${API_BASE_URL}/tasks/get-user-info/${targetUserId}`);
           const data = await response.json();
 
           if (response.ok) {

@@ -7,6 +7,7 @@ import {
 import toast from 'react-hot-toast';
 
 const UserHome = () => {
+  const API_BASE_URL = import.meta.env.VITE_API_URL;
   const { adminViewUserId } = useParams(); 
   const loggedInUser = JSON.parse(localStorage.getItem("user"));
   const effectiveUserId = adminViewUserId || loggedInUser?.id;
@@ -29,7 +30,8 @@ const UserHome = () => {
   // Add this to fetch the name of the user being viewed by admin
 useEffect(() => {
   if (isAdminMode && adminViewUserId) {
-    fetch(`http://localhost:5000/api/admin/users`) // Re-using your existing users endpoint
+    
+    fetch(`${API_BASE_URL}/admin/users`) // Re-using your existing users endpoint
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {
@@ -51,7 +53,7 @@ useEffect(() => {
   // FETCH EMPLOYEES: Targets your existing GET /api/admin/users route
   // FETCH EMPLOYEES: Targets your existing route and filters for 'employee' only
   useEffect(() => {
-  fetch('http://localhost:5000/api/admin/users')
+  fetch(`${API_BASE_URL}/admin/users`)
     .then(res => res.json())
     .then(data => {
       // 1. Access the 'users' array from the object your controller sends
@@ -75,11 +77,11 @@ useEffect(() => {
     const fetchData = async () => {
       if (!effectiveUserId) return; 
       try {
-        const projRes = await fetch('http://localhost:5000/api/tasks/projects');
+  const projRes = await fetch(`${API_BASE_URL}/tasks/projects`);
+
         const projData = await projRes.json();
         if (projRes.ok) setDbProjects(projData);
-
-        const response = await fetch(`http://localhost:5000/api/tasks/get-logs/${effectiveUserId}`);
+const response = await fetch(`${API_BASE_URL}/tasks/get-logs/${effectiveUserId}`);
         const data = await response.json();
 
         if (response.ok && Array.isArray(data)) {
@@ -203,7 +205,7 @@ useEffect(() => {
       }
     }
     try {
-      const response = await fetch("http://localhost:5000/api/tasks/save-day", {
+      const response = await fetch(`${API_BASE_URL}/tasks/save-day`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId: effectiveUserId, day_type: dayType, project_name: data.project_name,
@@ -234,7 +236,7 @@ useEffect(() => {
     const incomplete = weeklyLogs.some(log => log.day_type === "Working" && (!log.project_name || log.hours_worked === "00:00"));
     if (incomplete) { toast.error("Please fill all weekdays before submitting!"); return; }
     try {
-      const response = await fetch('http://localhost:5000/api/tasks/submit-weekly', {
+      const response = await fetch(`${API_BASE_URL}/tasks/submit-weekly`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: effectiveUserId, logs: weeklyLogs })
       });

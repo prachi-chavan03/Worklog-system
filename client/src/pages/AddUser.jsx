@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 
 const AddUser = () => {
   const navigate = useNavigate();
+  const API_BASE_URL = import.meta.env.VITE_API_URL;
   const [formData, setFormData] = useState({
     full_name: '',
     email: '',
@@ -23,7 +24,7 @@ const AddUser = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/admin/add-user', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/add-user`, {
         //
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

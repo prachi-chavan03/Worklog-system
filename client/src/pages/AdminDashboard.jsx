@@ -10,6 +10,7 @@ import {
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
+  const API_BASE_URL = import.meta.env.VITE_API_URL;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [users, setUsers] = useState([]);
   const [darkMode, setDarkMode] = useState(false);
@@ -35,7 +36,7 @@ const currentUser = JSON.parse(localStorage.getItem('user')) || {};
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const userRes = await fetch(`http://localhost:5000/api/admin/users?page=${currentPage}&limit=7`);
+        const userRes = await fetch(`${API_BASE_URL}/admin/users?page=${currentPage}&limit=7`);
         const userData = await userRes.json();
 
 if (userRes.ok) {
@@ -45,17 +46,17 @@ if (userRes.ok) {
   setTotalUsersCount(userData.totalUsers);
 }
 
-        const projRes = await fetch('http://localhost:5000/api/tasks/projects');
+        const projRes = await fetch(`${API_BASE_URL}/tasks/projects`);
         const projData = await projRes.json();
         if (projRes.ok) setProjects(projData);
 
         // Fetch pending logs summary
-        const pendingRes = await fetch('http://localhost:5000/api/admin/pending-logs-summary');
+        const pendingRes = await fetch(`${API_BASE_URL}/admin/pending-logs-summary`);
         const pendingData = await pendingRes.json();
         if (pendingRes.ok) setPendingUsers(pendingData);
 
         // Fetch password reset requests
-        const resetRes = await fetch('http://localhost:5000/api/admin/reset-requests');
+       const resetRes = await fetch(`${API_BASE_URL}/admin/reset-requests`);
         const resetData = await resetRes.json();
         if (resetRes.ok) setResetRequests(resetData);
 
@@ -69,7 +70,7 @@ if (userRes.ok) {
   const handleAddProject = async () => {
     if (!newProject.trim()) return toast.error("Project name required");
     try {
-        const res = await fetch('http://localhost:5000/api/admin/add-project', {
+        const res = await fetch(`${API_BASE_URL}/admin/add-project`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ project_name: newProject })
@@ -79,7 +80,7 @@ if (userRes.ok) {
             toast.success("Project added!");
             setNewProject("");
             setIsAddingProject(false);
-            const projRes = await fetch('http://localhost:5000/api/tasks/projects');
+            const projRes = await fetch(`${API_BASE_URL}/tasks/projects`);
             const projData = await projRes.json();
             if (projRes.ok) setProjects(projData);
         }
@@ -90,7 +91,7 @@ if (userRes.ok) {
 
   const handleInformUser = async (user) => {
     try {
-      const res = await fetch('http://localhost:5000/api/admin/inform-user', {
+      const res = await fetch(`${API_BASE_URL}/admin/inform-user`, { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -114,7 +115,7 @@ if (userRes.ok) {
     //Resolve for reset pass req
     const handleResolveRequest = async (requestId) => {
   // This matches the /resolve-reset/:id route above
-  const res = await fetch(`http://localhost:5000/api/admin/resolve-reset/${requestId}`, {
+  const res = await fetch(`${API_BASE_URL}/admin/resolve-reset/${requestId}`, { 
     method: 'PUT', // Must match the router method
   });
   

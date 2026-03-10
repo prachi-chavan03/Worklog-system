@@ -5,6 +5,7 @@ import { Eye,EyeOff, User, Users, Briefcase, LogOut, UserCircle, Filter } from '
 
 const ManagerDashboard = () => {
   const navigate = useNavigate();
+  const API_BASE_URL = import.meta.env.VITE_API_URL;
   const [users, setUsers] = useState([]);
   const [projects, setProjects] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
@@ -23,8 +24,8 @@ useEffect(() => {
     try {
       // Add pagination params to the URL
       const [uRes, pRes] = await Promise.all([
-        fetch(`http://localhost:5000/api/admin/users?page=${currentPage}&limit=7`),
-        fetch('http://localhost:5000/api/tasks/projects')
+       fetch(`${API_BASE_URL}/admin/users?page=${currentPage}&limit=7`),
+      fetch(`${API_BASE_URL}/tasks/projects`)
       ]);
 
       if (uRes.ok) {
@@ -50,8 +51,8 @@ useEffect(() => {
 const fetchData = async () => {
   try {
     const [uRes, pRes] = await Promise.all([
-      fetch('http://localhost:5000/api/admin/users'),
-      fetch('http://localhost:5000/api/tasks/projects')
+      fetch(`${API_BASE_URL}/admin/users`),
+    fetch(`${API_BASE_URL}/tasks/projects`)
     ]);
 
     if (uRes.ok) {

@@ -5,6 +5,7 @@ import { Lock, Mail, Eye, EyeOff,X} from "lucide-react";
 
 const Login = () => {
   const [email, setEmail] = useState('');
+  const API_BASE_URL = import.meta.env.VITE_API_URL;
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -25,7 +26,7 @@ const handleLogin = async (e) => {
   e.preventDefault();
 
   try {
-    const res = await fetch('http://localhost:5000/api/auth/login', {
+   const res = await fetch(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
@@ -70,7 +71,7 @@ const handleInformAdmin = async (e) => {
   if (!resetEmail) return toast.error("Please enter your email");
 
   try {
-    const response = await fetch('http://localhost:5000/api/auth/forgot-password', {
+    const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: resetEmail })
