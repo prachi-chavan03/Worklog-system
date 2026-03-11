@@ -210,10 +210,13 @@ if (userRes.ok) {
               {/* NAVIGATE BUTTON in Reset Requests Section */}
 <button 
   onClick={(e) => {
-    e.stopPropagation(); // Prevents the dropdown from closing
+    e.stopPropagation(); 
     if (req.user_id) {
-      // Use the exact same path format as your working User Management table
-      navigate(`/admin/edit-profile/:id/${req.user_id}`);
+      // ❌ CHANGE THIS:
+      // navigate(`/admin/edit-profile/:id/${req.user_id}`);
+      
+      // ✅ TO THIS:
+      navigate(`/admin/edit-profile/${currentUser.id}/${req.user_id}`);
     } else {
       toast.error("User record not found in database");
     }
@@ -383,12 +386,17 @@ if (userRes.ok) {
 </button>
 
                           <button 
-                            onClick={() => navigate(`/admin/edit-profile/:id/${u.id}`)} 
-                            className="p-2 text-green-600 hover:bg-green-50 rounded-full transition-colors"
-                            title="User Profile"
-                          >
-                            <User size={18} />
-                          </button>
+  // ❌ CHANGE THIS:
+  // onClick={() => navigate(`/admin/edit-profile/:id/${u.id}`)} 
+  
+  // ✅ TO THIS:
+  onClick={() => navigate(`/admin/edit-profile/${currentUser.id}/${u.id}`)} 
+  
+  className="p-2 text-green-600 hover:bg-green-50 rounded-full transition-colors"
+  title="User Profile"
+>
+  <User size={18} />
+</button>
                         </div>
                       </td>
                     </tr>

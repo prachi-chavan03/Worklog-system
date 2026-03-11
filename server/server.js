@@ -8,22 +8,7 @@ import taskRoutes from './routes/taskRoutes.js';
 const app = express();
 
 // --- UPDATED CORS SECTION ---
-const allowedOrigins = [
-  'https://worklog-system.vercel.app/', // This is your Vercel link from Render dashboard
-  'http://localhost:5173',  // Keep this for local testing
-];
-
-app.use(cors({
-  origin: (origin, callback) => {
-    // If no origin (like Postman) or origin is in our list, allow it
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true
-}));
+app.use(cors());
 // ----------------------------
 
 app.use(express.json());
