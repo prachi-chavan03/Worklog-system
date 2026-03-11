@@ -9,20 +9,27 @@ const ViewProfile = () => {
   const [employee, setEmployee] = useState(null);
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const res = await fetch(`${API_BASE_URL}/admin/users/${id}`);
-        if (res.ok) {
-          const data = await res.json();
-          setEmployee(data);
-        }
-      } catch (error) {
-        console.error("Error fetching profile:", error);
-      }
-    };
-    fetchProfile();
-  }, [id]);
+  // 1. Session Guard: Redirect to login if no user found
+  const session = sessionStorage.getItem('user');
+  if (!session) {
+    navigate('/');
+    return;
+  }
 
+  const fetchProfile = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/admin/users/${id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setEmployee(data);
+      }
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+    }
+  };
+
+  fetchProfile();
+}, [id, navigate, API_BASE_URL]);
   if (!employee) return <div className="p-10 text-center text-gray-400">Loading profile...</div>;
 
   return (

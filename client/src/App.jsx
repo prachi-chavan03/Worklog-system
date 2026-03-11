@@ -8,24 +8,69 @@ import UserHome from './pages/UserHome';
 import ManagerDashboard from './pages/ManagerDashboard';
 import ViewProfile from './pages/ViewProfile';
 import ViewLogs from './pages/ViewLogs'; 
+import ProtectedRoute from './components/ProtectedRoute'; // Import your recreated file
+
 function App() {
   return (
     <Router>
-      {/* Toaster placed here allows popups on any route */}
       <Toaster position="top-right" reverseOrder={false} /> 
     
       <Routes>
+        {/* PUBLIC ROUTE */}
         <Route path="/" element={<Login />} />
-        <Route path="/admin-dashboard" element={<AdminDashboard />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/add-user" element={<AddUser />} />
-        <Route path="/user-home" element={<UserHome />} />
-        <Route path="/admin/edit-profile/:id/:userId" element={<Profile />} />
-        <Route path="/manager-dashboard" element={<ManagerDashboard />} />
-        <Route path="/view-profile/:id" element={<ViewProfile />} />
-        <Route path="/view-logs/:id" element={<ViewLogs />} />
-        <Route path="/admin/view-user/:adminViewUserId" element={<UserHome />} />
-        <Route path="/admin/view-user/:adminViewUserId" element={<UserHome />} />
+
+        {/* ADMIN ONLY ROUTES */}
+        <Route path="/admin-dashboard" element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <AdminDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/add-user" element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <AddUser />
+          </ProtectedRoute>
+        } />
+
+        {/* SHARED PRIVATE ROUTES (Admin, Manager, Employee) */}
+        <Route path="/profile" element={
+          <ProtectedRoute allowedRoles={['admin', 'manager', 'employee']}>
+            <Profile />
+          </ProtectedRoute>
+        } />
+        <Route path="/user-home" element={
+          <ProtectedRoute allowedRoles={['admin', 'manager', 'employee']}>
+            <UserHome />
+          </ProtectedRoute>
+        } />
+
+        {/* MANAGER & ADMIN ROUTES */}
+        <Route path="/manager-dashboard" element={
+          <ProtectedRoute allowedRoles={['admin', 'manager']}>
+            <ManagerDashboard />
+          </ProtectedRoute>
+        } />
+
+        {/* VIEWING / EDITING ROUTES */}
+        <Route path="/view-profile/:id" element={
+          <ProtectedRoute allowedRoles={['admin', 'manager']}>
+            <ViewProfile />
+          </ProtectedRoute>
+        } />
+        <Route path="/view-logs/:id" element={
+          <ProtectedRoute allowedRoles={['admin', 'manager', 'employee']}>
+            <ViewLogs />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/view-user/:adminViewUserId" element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <UserHome />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/edit-profile/:id/:userId" element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <Profile />
+          </ProtectedRoute>
+        } />
       </Routes>
     </Router>
   );

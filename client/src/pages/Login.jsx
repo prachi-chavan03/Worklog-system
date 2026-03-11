@@ -36,9 +36,9 @@ const handleLogin = async (e) => {
 
     if (res.ok) {
       // 1. Save user info, token, and role
-      localStorage.setItem('user', JSON.stringify(data.user)); 
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('role', data.user.role); 
+      sessionStorage.setItem('user', JSON.stringify(data.user)); 
+sessionStorage.setItem('token', data.token);
+sessionStorage.setItem('role', data.user.role); 
 
       toast.success(`Welcome ${data.user.full_name || data.user.name}`);
 

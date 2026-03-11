@@ -9,7 +9,7 @@ import toast from 'react-hot-toast';
 const UserHome = () => {
   const API_BASE_URL = import.meta.env.VITE_API_URL;
   const { adminViewUserId } = useParams(); 
-  const loggedInUser = JSON.parse(localStorage.getItem("user"));
+const loggedInUser = JSON.parse(sessionStorage.getItem("user"));
   const effectiveUserId = adminViewUserId || loggedInUser?.id;
   const isAdminMode = Boolean(adminViewUserId); 
   const [viewingUserName, setViewingUserName] = useState("");
@@ -51,9 +51,10 @@ useEffect(() => {
 }, [adminViewUserId, isAdminMode, API_BASE_URL]);
 
   useEffect(() => {
-    const savedUser = JSON.parse(localStorage.getItem("user"));
-    if (!savedUser) { navigate('/'); } else { setUser(savedUser); }
-  }, [navigate]);
+   const savedUser = JSON.parse(sessionStorage.getItem("user"));
+  
+  if (!savedUser) { navigate('/'); } else { setUser(savedUser); }
+}, [navigate]);
 
   // FETCH EMPLOYEES: Targets your existing GET /api/admin/users route
   // FETCH EMPLOYEES: Targets your existing route and filters for 'employee' only
@@ -114,10 +115,11 @@ const response = await fetch(`${API_BASE_URL}/tasks/get-logs/${effectiveUserId}`
   }, [effectiveUserId, selectedWeek]);
 
   const handleLogout = () => {
-    localStorage.clear();
-    toast.success("Logged out successfully");
-    navigate('/');
-  };
+    sessionStorage.clear();
+  
+  toast.success("Logged out successfully");
+  navigate('/');
+};
 
   const formatTimeInput = (date, value) => {
     if (!value) return;

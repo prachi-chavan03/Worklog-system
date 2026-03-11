@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { UserPlus, ArrowLeft, Save, ShieldCheck } from 'lucide-react'; 
 import toast from 'react-hot-toast';
 
+
+
 const AddUser = () => {
   const navigate = useNavigate();
   const API_BASE_URL = import.meta.env.VITE_API_URL;
@@ -15,6 +17,21 @@ const AddUser = () => {
     isEmployee: true,
     isAdmin: false // New state for admin check
   });
+
+  useEffect(() => {
+  const session = sessionStorage.getItem('user');
+  if (!session) {
+    navigate('/');
+    return;
+  }
+  
+  const user = JSON.parse(session);
+  // Optional: Guard specifically for Admins if Managers shouldn't add users
+  if (user.role !== 'admin') {
+    toast.error("Unauthorized access");
+    navigate(-1);
+  }
+}, [navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

@@ -14,45 +14,59 @@ const ViewLogs = () => {
 
   const todayStr = new Date().toLocaleDateString('en-CA');
 
+  
+
   useEffect(() => {
-  const fetchData = async () => {
-    try {
-      // 1. Fetch projects
-const projRes = await fetch(`${API_BASE_URL}/tasks/projects`);
-
-      const projData = await projRes.json();
-      if (projRes.ok) setDbProjects(projData);
-
-      // 2. Fetch User Info (Function 2 - Returns Object)
-     const infoRes = await fetch(`${API_BASE_URL}/tasks/get-user-info/${id}`);
-      const infoData = await infoRes.json();
-      if (infoRes.ok) setEmployeeName(infoData.full_name);
-
-      // 3. Fetch User Logs (Function 1 - Returns Array)
-      const logRes = await fetch(`${API_BASE_URL}/tasks/get-logs/${id}`);
-      const logDataArray = await logRes.json();
-
-      if (logRes.ok && Array.isArray(logDataArray)) {
-        const formattedData = {};
-        logDataArray.forEach(log => {
-          const dateKey = new Date(log.work_date).toLocaleDateString('en-CA');
-          formattedData[dateKey] = {
-            day_type: log.day_type || "Working",
-            project_name: log.project_name,
-            module_name: log.module_name || "",
-            task_description: log.task_description,
-            hours_worked: log.hours_worked, 
-            is_wfh: log.is_wfh === 1
-          };
-        });
-        setLogData(formattedData);
-      }
-    } catch (error) { 
-      console.error("Fetch error:", error); 
+    // 1. SECURITY CHECK: Run this before anything else
+    const session = sessionStorage.getItem('user');
+    if (!session) {
+      navigate('/');
+      return;
     }
-  };
-  fetchData();
-}, [id]);
+
+    // 2. DEFINE FETCH LOGIC
+    const fetchData = async () => {
+      try {
+        // Fetch projects
+        const projRes = await fetch(`${API_BASE_URL}/tasks/projects`);
+        const projData = await projRes.json();
+        if (projRes.ok) setDbProjects(projData);
+
+        // Fetch User Info
+        const infoRes = await fetch(`${API_BASE_URL}/tasks/get-user-info/${id}`);
+        const infoData = await infoRes.json();
+        if (infoRes.ok) setEmployeeName(infoData.full_name);
+
+        // Fetch User Logs
+        const logRes = await fetch(`${API_BASE_URL}/tasks/get-logs/${id}`);
+        const logDataArray = await logRes.json();
+
+        if (logRes.ok && Array.isArray(logDataArray)) {
+          const formattedData = {};
+          logDataArray.forEach(log => {
+            const dateKey = new Date(log.work_date).toLocaleDateString('en-CA');
+            formattedData[dateKey] = {
+              day_type: log.day_type || "Working",
+              project_name: log.project_name,
+              module_name: log.module_name || "",
+              task_description: log.task_description,
+              hours_worked: log.hours_worked, 
+              is_wfh: log.is_wfh === 1
+            };
+          });
+          setLogData(formattedData);
+        }
+      } catch (error) { 
+        console.error("Fetch error:", error); 
+      }
+    };
+
+    // 3. EXECUTE FETCH
+    fetchData();
+
+  }, [id, navigate, API_BASE_URL]); // Dependencies ensure it re-runs if ID changes
+
+  // ... (rest of your component: getWeekRanges, return statement, etc.)
   const getWeekRanges = () => {
     const ranges = [];
     const now = new Date();

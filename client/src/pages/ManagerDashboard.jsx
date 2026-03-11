@@ -15,66 +15,37 @@ const [totalUsersCount, setTotalUsersCount] = useState(0);
 const [showOnlyEmployees, setShowOnlyEmployees] = useState(false);
 
 
-
 useEffect(() => {
-  const savedUser = JSON.parse(localStorage.getItem('user'));
+  // Sync with sessionStorage
+  const savedUser = JSON.parse(sessionStorage.getItem('user'));
   setCurrentUser(savedUser);
 
   const fetchData = async () => {
     try {
-      // Add pagination params to the URL
+      // Pagination and Projects fetch
       const [uRes, pRes] = await Promise.all([
-       fetch(`${API_BASE_URL}/admin/users?page=${currentPage}&limit=7`),
-      fetch(`${API_BASE_URL}/tasks/projects`)
+        fetch(`${API_BASE_URL}/admin/users?page=${currentPage}&limit=7`),
+        fetch(`${API_BASE_URL}/tasks/projects`)
       ]);
 
       if (uRes.ok) {
         const data = await uRes.json();
-        // Extract from the object just like in AdminDash
         setUsers(Array.isArray(data.users) ? data.users : []);
         setTotalPages(data.totalPages || 1);
         setTotalUsersCount(data.totalUsers || 0);
       }
-      // ... rest of your project fetch logic
+
+      if (pRes.ok) {
+        const projectData = await pRes.json();
+        setProjects(Array.isArray(projectData) ? projectData : []);
+      }
     } catch (error) {
       toast.error("Failed to load data");
     }
   };
+  
   fetchData();
-}, [currentPage]); // Re-run when page changes
-  
-  // NEW STATE: For the employee toggle
-  
-  useEffect(() => {
-    const savedUser = JSON.parse(localStorage.getItem('user'));
-    setCurrentUser(savedUser);
-const fetchData = async () => {
-  try {
-    const [uRes, pRes] = await Promise.all([
-      fetch(`${API_BASE_URL}/admin/users`),
-    fetch(`${API_BASE_URL}/tasks/projects`)
-    ]);
-
-    if (uRes.ok) {
-      const data = await uRes.json();
-      console.log("Data from backend:", data);
-
-      // CHANGE THIS LINE: 
-      // Instead of setUsers(data), use:
-      setUsers(Array.isArray(data.users) ? data.users : []);
-    }
-
-    if (pRes.ok) {
-      const projectData = await pRes.json();
-      setProjects(Array.isArray(projectData) ? projectData : []);
-    }
-  } catch (error) {
-    console.error("Fetch error:", error);
-    toast.error("Failed to load data");
-  }
-};
-    fetchData();
-  }, []);
+}, [currentPage, API_BASE_URL]); // Dependencies are clean
 
 const displayUsers = Array.isArray(users) 
   ? (showOnlyEmployees 
@@ -106,12 +77,13 @@ const displayUsers = Array.isArray(users)
             </div>
           </div>
 
-          <button 
-            onClick={() => { localStorage.clear(); navigate('/'); }} 
-            className="bg-red-500 hover:bg-red-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-colors"
-          >
-            <LogOut size={18} /> Logout
-          </button>
+         // UPDATE THIS IN YOUR NAV BAR:
+<button 
+  onClick={() => { sessionStorage.clear(); navigate('/'); }} 
+  className="bg-red-500 hover:bg-red-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-colors"
+>
+  <LogOut size={18} /> Logout
+</button>
         </div>
       </nav>
 

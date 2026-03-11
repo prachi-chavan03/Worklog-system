@@ -27,7 +27,7 @@ const Profile = () => {
     confirmPassword: ''
   });
 
-  const loggedInUser = JSON.parse(localStorage.getItem("user"));
+  const loggedInUser = JSON.parse(sessionStorage.getItem("user"));
   const isAdminEditingOthers = (loggedInUser?.role === 'Admin' || loggedInUser?.role === 'admin') && userId;
 
   const handleUpdate = async () => {
@@ -104,7 +104,7 @@ const Profile = () => {
           console.error("Error fetching target user:", err);
         }
       } else {
-        const savedUser = JSON.parse(localStorage.getItem("user"));
+        const savedUser = JSON.parse(sessionStorage.getItem("user"));
         if (savedUser) {
           setUserData(savedUser);
           setFormData({
@@ -112,7 +112,7 @@ const Profile = () => {
             email: savedUser.email,
             designation: savedUser.designation || '',
             role: savedUser.role,
-            isAdmin: fetchedUser.role.toLowerCase() === 'admin',
+            isAdmin: (savedUser.role || "").toLowerCase() === 'admin',
             status: 'active', // Added safety
             password: '',
             confirmPassword: ''

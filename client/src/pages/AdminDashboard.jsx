@@ -31,7 +31,7 @@ const [totalUsersCount, setTotalUsersCount] = useState(0); // For the 'Total Use
   const [resetRequests, setResetRequests] = useState([]);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [isResetDropdownOpen, setIsResetDropdownOpen] = useState(false);
-const currentUser = JSON.parse(localStorage.getItem('user')) || {};
+const currentUser = JSON.parse(sessionStorage.getItem('user')) || {};
 
   useEffect(() => {
     const fetchData = async () => {
@@ -107,10 +107,11 @@ if (userRes.ok) {
   };
 
   const handleLogout = () => {
-    localStorage.clear();
-    toast.success("Logged out successfully");
-    navigate('/');
-  };
+    sessionStorage.clear();
+  
+  toast.success("Logged out successfully");
+  navigate('/');
+};
    
     //Resolve for reset pass req
     const handleResolveRequest = async (requestId) => {
