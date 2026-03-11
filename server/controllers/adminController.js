@@ -1,5 +1,5 @@
 import db from '../config/db.js';
-import nodemailer from 'nodemailer';
+import sgMail from '@sendgrid/mail';
 
 
 // 1. GET ALL USERS (Final Fix for 500 Error)
@@ -208,39 +208,27 @@ export const getPendingLogsSummary = async (req, res) => {
 };
 
 // 6. INFORM USER (New)
+
+
 export const informUser = async (req, res) => {
   const { email, pendingDates } = req.body;
 
-  // 1. SendGrid Setup
-  const smtpUser = "apikey"; // Always 'apikey' for SendGrid
-  const smtpPass = process.env.SENDGRID_API_KEY; // Your SG.xxx key
-  const verifiedSender = process.env.SENDER_EMAIL; // e.g., 'your-email@gmail.com'
+  // Set API Key
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+  const verifiedSender = process.env.SENDER_EMAIL;
 
-  if (!smtpPass || !verifiedSender) {
-    return res.status(500).json({ 
-      message: "SendGrid configuration missing in environment variables" 
-    });
+  if (!process.env.SENDGRID_API_KEY || !verifiedSender) {
+    return res.status(500).json({ message: "SendGrid config missing" });
   }
 
   try {
-    const transporter = nodemailer.createTransport({
-      host: "smtp.sendgrid.net",
-      port: 587,
-      secure: false, // TLS
-      auth: {
-        user: smtpUser,
-        pass: smtpPass
-      }
-    });
-
     const dateList = pendingDates.map(d => 
       `<li>${new Date(d).toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short' })}</li>`
     ).join('');
 
-    const mailOptions = {
-      // CRITICAL: The 'from' must be your Single Sender Verified email in SendGrid
-      from: `"Worklog Admin" <${verifiedSender}>`,
+    const msg = {
       to: email,
+      from: verifiedSender, // Must be verified in SendGrid Dashboard
       subject: 'Action Required: Pending Work Logs',
       html: `
         <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 12px;">
@@ -249,24 +237,24 @@ export const informUser = async (req, res) => {
           <ul style="color: #b91c1c; font-weight: bold;">
             ${dateList}
           </ul>
-          <p>Please complete your submissions via the dashboard as soon as possible.</p>
-          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
-          <p style="font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 1px;">
-            Worklog Management System
-          </p>
+          <hr />
+          <p style="font-size: 11px; color: #999;">Worklog Management System</p>
         </div>
-      `
+      `,
     };
 
-    await transporter.sendMail(mailOptions);
-    res.status(200).json({ success: true, message: "Email sent via SendGrid" });
+    // ✅ SUCCESS: This sends via HTTP API (Port 443), bypassing the Render block!
+    await sgMail.send(msg);
+    
+    res.status(200).json({ success: true, message: "Email sent successfully via API" });
 
   } catch (error) {
-    console.error("❌ SendGrid SMTP Error:", error.message);
-    res.status(500).json({ message: "Failed to send email", details: error.message });
+    // SendGrid error objects are deep, this helps you see the real reason for failure
+    const errorMessage = error.response ? error.response.body.errors[0].message : error.message;
+    console.error("❌ SendGrid API Error:", errorMessage);
+    res.status(500).json({ message: "Failed to send email", details: errorMessage });
   }
 };
-
 // 7. GET SINGLE USER BY ID (Fixes the 404 & JSON error)
 export const getUserById = async (req, res) => {
   const { id } = req.params;
