@@ -211,10 +211,6 @@ export const getPendingLogsSummary = async (req, res) => {
 export const informUser = async (req, res) => {
   const { email, pendingDates } = req.body;
 
-  // DEBUG: Check if variables are loaded
-  console.log("EMAIL_USER:", process.env.EMAIL_USER);
-  console.log("EMAIL_PASS:", process.env.EMAIL_PASS ? "EXISTS" : "MISSING");
-
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
     return res.status(500).json({ 
       message: "Email credentials not configured in server .env file" 
@@ -222,17 +218,22 @@ export const informUser = async (req, res) => {
   }
 
   try {
+    // ✅ NEW CONFIGURATION FOR DEPLOYMENT
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false, // Use false for 587
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
+      },
+      // ✅ FORCE IPv4 TO PREVENT ENETUNREACH ERROR
+      tls: {
+        family: 4,
+        rejectUnauthorized: false // Helps avoid SSL handshake issues on some servers
       }
     });
 
-    // ... rest of your mailOptions and sendMail code
-
-    // Formatting dates for a clean HTML list
     const dateList = pendingDates.map(d => 
       `<li>${new Date(d).toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short' })}</li>`
     ).join('');
@@ -258,7 +259,6 @@ export const informUser = async (req, res) => {
     await transporter.sendMail(mailOptions);
     res.status(200).json({ success: true, message: "Email sent successfully" });
   } catch (error) {
-    // Check your terminal for this specific error message
     console.error("❌ Nodemailer Error:", error.message);
     res.status(500).json({ message: "Failed to send email", details: error.message });
   }
