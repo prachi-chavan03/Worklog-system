@@ -221,15 +221,16 @@ export const informUser = async (req, res) => {
     // ✅ NEW CONFIGURATION FOR DEPLOYMENT
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
-      port: 587,
-      secure: false, // Use false for 587
+      port: 465,
+      secure: true, // Use true for 465
+      family: 4,
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
       },
       // ✅ FORCE IPv4 TO PREVENT ENETUNREACH ERROR
       tls: {
-        family: 4,
+        
         rejectUnauthorized: false // Helps avoid SSL handshake issues on some servers
       }
     });
