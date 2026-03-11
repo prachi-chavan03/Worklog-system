@@ -211,27 +211,25 @@ export const getPendingLogsSummary = async (req, res) => {
 export const informUser = async (req, res) => {
   const { email, pendingDates } = req.body;
 
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+  // 1. SendGrid Setup
+  const smtpUser = "apikey"; // Always 'apikey' for SendGrid
+  const smtpPass = process.env.SENDGRID_API_KEY; // Your SG.xxx key
+  const verifiedSender = process.env.SENDER_EMAIL; // e.g., 'your-email@gmail.com'
+
+  if (!smtpPass || !verifiedSender) {
     return res.status(500).json({ 
-      message: "Email credentials not configured in server .env file" 
+      message: "SendGrid configuration missing in environment variables" 
     });
   }
 
   try {
-    // ✅ NEW CONFIGURATION FOR DEPLOYMENT
     const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 465,
-      secure: true, // Use true for 465
-      family: 4,
+      host: "smtp.sendgrid.net",
+      port: 587,
+      secure: false, // TLS
       auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      },
-      // ✅ FORCE IPv4 TO PREVENT ENETUNREACH ERROR
-      tls: {
-        
-        rejectUnauthorized: false // Helps avoid SSL handshake issues on some servers
+        user: smtpUser,
+        pass: smtpPass
       }
     });
 
@@ -240,27 +238,31 @@ export const informUser = async (req, res) => {
     ).join('');
 
     const mailOptions = {
-      from: `"Worklog Admin" <${process.env.EMAIL_USER}>`,
+      // CRITICAL: The 'from' must be your Single Sender Verified email in SendGrid
+      from: `"Worklog Admin" <${verifiedSender}>`,
       to: email,
       subject: 'Action Required: Pending Work Logs',
       html: `
-        <div style="font-family: sans-serif; color: #333;">
-          <h3>Hello,</h3>
+        <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 12px;">
+          <h3 style="color: #1d4ed8;">Hello,</h3>
           <p>This is a reminder to fill your work logs for the following dates:</p>
-          <ul style="color: #d32f2f; font-weight: bold;">
+          <ul style="color: #b91c1c; font-weight: bold;">
             ${dateList}
           </ul>
-          <p>Please complete your submissions as soon as possible.</p>
-          <hr />
-          <p style="font-size: 12px; color: #777;">Worklog Management System</p>
+          <p>Please complete your submissions via the dashboard as soon as possible.</p>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+          <p style="font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 1px;">
+            Worklog Management System
+          </p>
         </div>
       `
     };
 
     await transporter.sendMail(mailOptions);
-    res.status(200).json({ success: true, message: "Email sent successfully" });
+    res.status(200).json({ success: true, message: "Email sent via SendGrid" });
+
   } catch (error) {
-    console.error("❌ Nodemailer Error:", error.message);
+    console.error("❌ SendGrid SMTP Error:", error.message);
     res.status(500).json({ message: "Failed to send email", details: error.message });
   }
 };
