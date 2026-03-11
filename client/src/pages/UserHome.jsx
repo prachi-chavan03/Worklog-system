@@ -30,20 +30,25 @@ const UserHome = () => {
   // Add this to fetch the name of the user being viewed by admin
 useEffect(() => {
   if (isAdminMode && adminViewUserId) {
-    
-    fetch(`${API_BASE_URL}/admin/users`) // Re-using your existing users endpoint
+    fetch(`${API_BASE_URL}/admin/users`)
       .then(res => res.json())
       .then(data => {
-        if (Array.isArray(data)) {
-          const viewedUser = data.find(u => u.id.toString() === adminViewUserId.toString());
+        // FIX: Look into data.users instead of just data
+        if (data && Array.isArray(data.users)) {
+          const viewedUser = data.users.find(u => u.id.toString() === adminViewUserId.toString());
           if (viewedUser) {
             setViewingUserName(viewedUser.full_name);
+          } else {
+            setViewingUserName("Unknown User");
           }
         }
       })
-      .catch(err => console.error("Error fetching viewed user name:", err));
+      .catch(err => {
+        console.error("Error fetching viewed user name:", err);
+        setViewingUserName("Error Loading Name");
+      });
   }
-}, [adminViewUserId, isAdminMode]);
+}, [adminViewUserId, isAdminMode, API_BASE_URL]);
 
   useEffect(() => {
     const savedUser = JSON.parse(localStorage.getItem("user"));
@@ -73,7 +78,8 @@ useEffect(() => {
     })
     .catch(err => console.error("Dropdown fetch error:", err));
 }, [loggedInUser?.id]);
-  useEffect(() => {
+  
+useEffect(() => {
     const fetchData = async () => {
       if (!effectiveUserId) return; 
       try {
