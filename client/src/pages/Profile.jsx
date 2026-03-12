@@ -37,21 +37,36 @@ const Profile = () => {
     return;
   }
 
-  // FIXED LOGIC: 
-  // If the Admin checkbox is checked, set role to 'admin'.
-  // If NOT checked, use the existing role that we originally loaded into userData.
-  // This prevents non-admin roles from being reset to 'employee'.
-  const selectedRole = formData.isAdmin ? 'admin' : userData.role;
+  // Identify if this user is an actual employee (has an ID)
+  const hasEmployeeId = userData.employee_id || userData.userEmployeeId;
+  let selectedRole;
+
+  if (formData.isAdmin) {
+    // 1. If checkbox is Ticked -> Role is always Admin
+    selectedRole = 'admin';
+  } else {
+    // 2. If checkbox is UNTICKED:
+    if (hasEmployeeId) {
+      // If they have an employee_id, they MUST revert to 'employee'
+      selectedRole = 'employee';
+    } else {
+      // If no employee_id, check if they were admin. 
+      // If they were, and we untick, they become 'user' or stay their special role
+      const previousRole = (userData.role || "").toLowerCase();
+      selectedRole = previousRole === 'admin' ? 'user' : userData.role;
+    }
+  }
 
   try {
     const payload = {
       full_name: formData.full_name || '',
       email: formData.email || '',
       designation: formData.designation || '',
-      role: selectedRole, // Sending the preserved role
+      role: selectedRole,
       status: formData.status || 'active',
       password: formData.password || '',
-      employee_id: userData.employee_id || userData.userEmployeeId
+      // Always preserve the employee_id if it exists
+      employee_id: hasEmployeeId || null 
     };
 
     const response = await fetch(`${API_BASE_URL}/admin/update-user/${targetUserId}`, {
@@ -61,16 +76,21 @@ const Profile = () => {
     });
 
     if (response.ok) {
-      toast.success("Profile updated successfully!");
+      toast.success("Profile Updated successfully");
       setIsEditMode(false);
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
+      
+      // Safety: If editing self, update session
+      if (loggedInUser?.id === targetUserId) {
+        const updatedSession = { ...loggedInUser, role: selectedRole };
+        sessionStorage.setItem("user", JSON.stringify(updatedSession));
+      }
+
+      setTimeout(() => { window.location.reload(); }, 1500);
     } else {
       toast.error("Failed to update.");
     }
   } catch (error) {
-    toast.error("Server error occurred.");
+    toast.error("Server error.");
   }
 };
   useEffect(() => {

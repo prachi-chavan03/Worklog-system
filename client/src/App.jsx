@@ -57,7 +57,7 @@ function App() {
           </ProtectedRoute>
         } />
         <Route path="/view-logs/:id" element={
-          <ProtectedRoute allowedRoles={['non-employee']}>
+          <ProtectedRoute allowedRoles={['non-employee','employee']}>
             <ViewLogs />
           </ProtectedRoute>
         } />

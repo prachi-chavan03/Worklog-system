@@ -16,55 +16,56 @@ const ViewLogs = () => {
 
   
 
-  useEffect(() => {
-    // 1. SECURITY CHECK: Run this before anything else
-    const session = sessionStorage.getItem('user');
-    if (!session) {
-      navigate('/');
-      return;
-    }
+ useEffect(() => {
+  const session = sessionStorage.getItem('user');
+  if (!session) {
+    navigate('/');
+    return;
+  }
 
-    // 2. DEFINE FETCH LOGIC
-    const fetchData = async () => {
-      try {
-        // Fetch projects
-        const projRes = await fetch(`${API_BASE_URL}/tasks/projects`);
-        const projData = await projRes.json();
-        if (projRes.ok) setDbProjects(projData);
-
-        // Fetch User Info
-        const infoRes = await fetch(`${API_BASE_URL}/tasks/get-user-info/${id}`);
-        const infoData = await infoRes.json();
-        if (infoRes.ok) setEmployeeName(infoData.full_name);
-
-        // Fetch User Logs
-        const logRes = await fetch(`${API_BASE_URL}/tasks/get-logs/${id}`);
-        const logDataArray = await logRes.json();
-
-        if (logRes.ok && Array.isArray(logDataArray)) {
-          const formattedData = {};
-          logDataArray.forEach(log => {
-            const dateKey = new Date(log.work_date).toLocaleDateString('en-CA');
-            formattedData[dateKey] = {
-              day_type: log.day_type || "Working",
-              project_name: log.project_name,
-              module_name: log.module_name || "",
-              task_description: log.task_description,
-              hours_worked: log.hours_worked, 
-              is_wfh: log.is_wfh === 1
-            };
-          });
-          setLogData(formattedData);
-        }
-      } catch (error) { 
-        console.error("Fetch error:", error); 
+  const fetchData = async () => {
+    try {
+      // 1. Fetch User Info FIRST to update the header quickly
+      const infoRes = await fetch(`${API_BASE_URL}/tasks/get-user-info/${id}`);
+      const infoData = await infoRes.json();
+      
+      if (infoRes.ok) {
+        // Fallback check: try full_name, then name, then userName
+        setEmployeeName(infoData.full_name || infoData.name || infoData.userName || "Unknown User");
       }
-    };
 
-    // 3. EXECUTE FETCH
-    fetchData();
+      // 2. Fetch projects and logs...
+      const [projRes, logRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/tasks/projects`),
+        fetch(`${API_BASE_URL}/tasks/get-logs/${id}`)
+      ]);
 
-  }, [id, navigate, API_BASE_URL]); // Dependencies ensure it re-runs if ID changes
+      const projData = await projRes.json();
+      if (projRes.ok) setDbProjects(projData);
+
+      const logDataArray = await logRes.json();
+      if (logRes.ok && Array.isArray(logDataArray)) {
+        const formattedData = {};
+        logDataArray.forEach(log => {
+          const dateKey = new Date(log.work_date).toLocaleDateString('en-CA');
+          formattedData[dateKey] = {
+            day_type: log.day_type || "Working",
+            project_name: log.project_name,
+            module_name: log.module_name || "",
+            task_description: log.task_description,
+            hours_worked: log.hours_worked, 
+            is_wfh: log.is_wfh === 1
+          };
+        });
+        setLogData(formattedData);
+      }
+    } catch (error) { 
+      console.error("Fetch error:", error); 
+    }
+  };
+
+  fetchData();
+}, [id, navigate, API_BASE_URL]); // 'id' here ensures it re-runs when URL changes // Dependencies ensure it re-runs if ID changes
 
   // ... (rest of your component: getWeekRanges, return statement, etc.)
   const getWeekRanges = () => {
