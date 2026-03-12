@@ -1,9 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserPlus, ArrowLeft, Save, ShieldCheck } from 'lucide-react'; 
 import toast from 'react-hot-toast';
-
-
 
 const AddUser = () => {
   const navigate = useNavigate();

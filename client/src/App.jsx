@@ -8,7 +8,7 @@ import UserHome from './pages/UserHome';
 import ManagerDashboard from './pages/ManagerDashboard';
 import ViewProfile from './pages/ViewProfile';
 import ViewLogs from './pages/ViewLogs'; 
-import ProtectedRoute from './components/ProtectedRoute'; // Import your recreated file
+import ProtectedRoute from './components/ProtectedRoute'; 
 
 function App() {
   return (
@@ -33,31 +33,31 @@ function App() {
 
         {/* SHARED PRIVATE ROUTES (Admin, Manager, Employee) */}
         <Route path="/profile" element={
-          <ProtectedRoute allowedRoles={['admin', 'manager', 'employee']}>
+          <ProtectedRoute allowedRoles={['admin', 'non-employee', 'employee']}>
             <Profile />
           </ProtectedRoute>
         } />
         <Route path="/user-home" element={
-          <ProtectedRoute allowedRoles={['admin', 'manager', 'employee']}>
+          <ProtectedRoute allowedRoles={['admin', 'employee']}>
             <UserHome />
           </ProtectedRoute>
         } />
 
         {/* MANAGER & ADMIN ROUTES */}
         <Route path="/manager-dashboard" element={
-          <ProtectedRoute allowedRoles={['admin', 'manager']}>
+          <ProtectedRoute allowedRoles={['non-employee']}>
             <ManagerDashboard />
           </ProtectedRoute>
         } />
 
         {/* VIEWING / EDITING ROUTES */}
         <Route path="/view-profile/:id" element={
-          <ProtectedRoute allowedRoles={['admin', 'manager']}>
+          <ProtectedRoute allowedRoles={['non-employee']}>
             <ViewProfile />
           </ProtectedRoute>
         } />
         <Route path="/view-logs/:id" element={
-          <ProtectedRoute allowedRoles={['admin', 'manager', 'employee']}>
+          <ProtectedRoute allowedRoles={['non-employee']}>
             <ViewLogs />
           </ProtectedRoute>
         } />

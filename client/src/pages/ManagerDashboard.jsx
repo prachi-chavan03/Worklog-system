@@ -77,7 +77,7 @@ const displayUsers = Array.isArray(users)
             </div>
           </div>
 
-         // UPDATE THIS IN YOUR NAV BAR:
+         
 <button 
   onClick={() => { sessionStorage.clear(); navigate('/'); }} 
   className="bg-red-500 hover:bg-red-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-colors"

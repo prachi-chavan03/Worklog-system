@@ -27,48 +27,52 @@ const Profile = () => {
     confirmPassword: ''
   });
 
+  // Updated to sessionStorage
   const loggedInUser = JSON.parse(sessionStorage.getItem("user"));
   const isAdminEditingOthers = (loggedInUser?.role === 'Admin' || loggedInUser?.role === 'admin') && userId;
 
   const handleUpdate = async () => {
-    if (formData.password && formData.password !== formData.confirmPassword) {
-      toast.error("Passwords do not match!");
-      return;
+  if (formData.password && formData.password !== formData.confirmPassword) {
+    toast.error("Passwords do not match!");
+    return;
+  }
+
+  // FIXED LOGIC: 
+  // If the Admin checkbox is checked, set role to 'admin'.
+  // If NOT checked, use the existing role that we originally loaded into userData.
+  // This prevents non-admin roles from being reset to 'employee'.
+  const selectedRole = formData.isAdmin ? 'admin' : userData.role;
+
+  try {
+    const payload = {
+      full_name: formData.full_name || '',
+      email: formData.email || '',
+      designation: formData.designation || '',
+      role: selectedRole, // Sending the preserved role
+      status: formData.status || 'active',
+      password: formData.password || '',
+      employee_id: userData.employee_id || userData.userEmployeeId
+    };
+
+    const response = await fetch(`${API_BASE_URL}/admin/update-user/${targetUserId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (response.ok) {
+      toast.success("Profile updated successfully!");
+      setIsEditMode(false);
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    } else {
+      toast.error("Failed to update.");
     }
-    const selectedRole = formData.isAdmin ? 'admin' : 'employee';
-
-    try {
-      // FIX 1: Ensure no values are 'undefined' before sending to backend
-      const payload = {
-        full_name: formData.full_name || '',
-        email: formData.email || '',
-        designation: formData.designation || '',
-       role: selectedRole,
-        status: formData.status || 'active',
-        password: formData.password || '',
-       employee_id: userData.employee_id || userData.userEmployeeId
-      };
-
-      const response = await fetch(`${API_BASE_URL}/admin/update-user/${targetUserId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload) // Send payload instead of formData directly
-      });
-
-      if (response.ok) {
-        toast.success("Profile updated successfully!");
-        setIsEditMode(false);
-        setTimeout(() => {
-          window.location.reload();
-        }, 2000);
-      } else {
-        toast.error("Failed to update.");
-      }
-    } catch (error) {
-      toast.error("Server error occurred.");
-    }
-  };
-
+  } catch (error) {
+    toast.error("Server error occurred.");
+  }
+};
   useEffect(() => {
     const fetchUserData = async () => {
       if (targetUserId) {
@@ -82,7 +86,7 @@ const Profile = () => {
               email: data.userEmail || '', 
               designation: data.userDesignation || '',
               role: data.userRole || 'Employee',
-              status: data.userStatus || 'active', // FIX 2: Default fallback
+              status: data.userStatus || 'active',
               employee_id: data.userEmployeeId,
               id: targetUserId
             };
@@ -94,7 +98,6 @@ const Profile = () => {
               designation: fetchedUser.designation,
               role: fetchedUser.role,
               isAdmin: (data.userRole || "").toLowerCase() === 'admin',
-              
               status: fetchedUser.status, 
               password: '',
               confirmPassword: ''
@@ -104,6 +107,7 @@ const Profile = () => {
           console.error("Error fetching target user:", err);
         }
       } else {
+        // Updated to sessionStorage and fixed the fetchedUser scope bug
         const savedUser = JSON.parse(sessionStorage.getItem("user"));
         if (savedUser) {
           setUserData(savedUser);
@@ -113,7 +117,7 @@ const Profile = () => {
             designation: savedUser.designation || '',
             role: savedUser.role,
             isAdmin: (savedUser.role || "").toLowerCase() === 'admin',
-            status: 'active', // Added safety
+            status: 'active',
             password: '',
             confirmPassword: ''
           });
@@ -238,20 +242,20 @@ const Profile = () => {
             </div>
 
             {/* ADMIN CHECKBOX COMPONENT */}
-{isEditMode && isAdminEditingOthers && (
-  <div className="flex items-center gap-3 p-4 bg-purple-50 rounded-xl border border-purple-100 mt-2">
-    <input 
-      type="checkbox" 
-      id="adminCheck" 
-      checked={formData.isAdmin} 
-      className="w-5 h-5 accent-purple-600 cursor-pointer"
-      onChange={(e) => setFormData({...formData, isAdmin: e.target.checked})} 
-    />
-    <label htmlFor="adminCheck" className="text-sm font-bold text-purple-800 cursor-pointer">
-      Assign Admin Role (Access to full management)
-    </label>
-  </div>
-)}
+            {isEditMode && isAdminEditingOthers && (
+              <div className="flex items-center gap-3 p-4 bg-purple-50 rounded-xl border border-purple-100 mt-2">
+                <input 
+                  type="checkbox" 
+                  id="adminCheck" 
+                  checked={formData.isAdmin} 
+                  className="w-5 h-5 accent-purple-600 cursor-pointer"
+                  onChange={(e) => setFormData({...formData, isAdmin: e.target.checked})} 
+                />
+                <label htmlFor="adminCheck" className="text-sm font-bold text-purple-800 cursor-pointer">
+                  Assign Admin Role (Access to full management)
+                </label>
+              </div>
+            )}
 
             {/* ACCOUNT STATUS SECTION */}
             {isEditMode && isAdminEditingOthers && (
@@ -270,7 +274,6 @@ const Profile = () => {
                   />
                   <label htmlFor="statusToggle" className="font-bold text-sm text-gray-700 cursor-pointer">
                     Account is <span className={(formData?.status || 'active') === 'active' ? "text-green-600" : "text-red-600"}>
-                      {/* FIX 3: Safe call to toUpperCase using fallback */}
                       {(formData?.status || 'active').toUpperCase()}
                     </span>
                   </label>

@@ -16,7 +16,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   // If user role is not in the allowed list, send them to User Home
   const userRole = user.role?.toLowerCase();
   if (allowedRoles && !allowedRoles.includes(userRole)) {
-    return <Navigate to="/user-home" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   // 3. If everything is fine, show the page

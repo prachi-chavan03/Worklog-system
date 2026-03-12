@@ -43,16 +43,16 @@ sessionStorage.setItem('role', data.user.role);
       toast.success(`Welcome ${data.user.full_name || data.user.name}`);
 
       // 2. NEW REDIRECT LOGIC
-      if (data.user.role === 'admin') {
-        // Full access for the actual Admin
-        navigate('/admin-dashboard');
-      } else if (data.user.role === 'non-employee') {
-        // Send the non-employee to their own specific page
-        navigate('/manager-dashboard'); 
-      } else {
-        // Standard employees go to their personal page
-        navigate('/user-home'); 
-      }
+     const userRole = data.user.role ? data.user.role.toLowerCase().trim() : '';
+
+if (userRole === 'admin') {
+    navigate('/admin-dashboard');
+} else if (userRole === 'non-employee') {
+    // This matches your ENUM exactly
+    navigate('/manager-dashboard'); 
+} else {
+    navigate('/user-home'); 
+}
     } else {
       // This 'data.message' will now correctly display "Your account is deactivated..." 
       // because the backend is sending that specific string in the JSON.
