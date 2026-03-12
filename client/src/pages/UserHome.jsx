@@ -1,20 +1,23 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate ,useLocation} from "react-router-dom";
 import React, { useState, useEffect } from 'react';
 import { 
   LogOut, User, Calendar, 
-  Edit, Eye, Send, Save as SaveIcon, X 
+  Edit, Eye, Send, Save as SaveIcon, X ,ArrowLeft
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const UserHome = () => {
-  const API_BASE_URL = import.meta.env.VITE_API_URL;
+  const navigate = useNavigate();
+  const location = useLocation();
   const { adminViewUserId } = useParams(); 
+  const isFromAdmin = location.state?.fromAdmin;
+   const API_BASE_URL = import.meta.env.VITE_API_URL;
 const loggedInUser = JSON.parse(sessionStorage.getItem("user"));
   const effectiveUserId = adminViewUserId || loggedInUser?.id;
   const isAdminMode = Boolean(adminViewUserId); 
   const [viewingUserName, setViewingUserName] = useState("");
 
-  const navigate = useNavigate();
+  
   const [user, setUser] = useState(null);
   const [selectedWeek, setSelectedWeek] = useState(0);
   const [logData, setLogData] = useState({});
@@ -320,6 +323,16 @@ const response = await fetch(`${API_BASE_URL}/tasks/get-logs/${effectiveUserId}`
 )}
 
       <main className="p-4 md:p-8 max-w-7xl mx-auto">
+        {/* 🚀 ADD THIS SECTION: BACK TO ADMIN BUTTON */}
+  {isFromAdmin && (
+    <button 
+      onClick={() => navigate('/admin-dashboard')}
+      className="flex items-center gap-2 mb-6 px-4 py-2 bg-white border border-blue-200 text-blue-600 rounded-xl font-bold text-sm shadow-sm hover:bg-blue-50 transition-all active:scale-95"
+    >
+      <ArrowLeft size={18} />
+      Back to Admin Dashboard
+    </button>
+  )}
         {!isWeekEditable && (
           <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-3 text-amber-700 shadow-sm">
             <Eye size={18} /><span className="text-sm font-bold">Viewing Archive: Editing is only allowed for the current and previous week.</span>
