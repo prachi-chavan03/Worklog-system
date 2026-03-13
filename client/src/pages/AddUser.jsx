@@ -13,7 +13,16 @@ const AddUser = () => {
     password: '',
     confirmPassword: '',
     isEmployee: true,
-    isAdmin: false // New state for admin check
+    isAdmin: false ,
+
+    mobile: '',
+  address: '',
+  dob: '',
+  date_of_joining: '',
+  skills: '',
+  education: ''
+
+
   });
 
   useEffect(() => {
@@ -169,6 +178,71 @@ const AddUser = () => {
                 </label>
               </div>
             </div>
+
+            {/* Personal Details Section */}
+<div className="pt-4 border-t border-gray-100 space-y-5">
+  <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest">Additional Details (Optional)</h3>
+  
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div>
+      <label className="block text-sm font-bold text-gray-700 mb-2">Mobile Number</label>
+      <input 
+        type="text" 
+        className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" 
+        placeholder="+91 ..."
+        onChange={(e) => setFormData({...formData, mobile: e.target.value})} 
+      />
+    </div>
+    <div>
+      <label className="block text-sm font-bold text-gray-700 mb-2">Education</label>
+      <input 
+        type="text" 
+        className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" 
+        placeholder="Degree/University"
+        onChange={(e) => setFormData({...formData, education: e.target.value})} 
+      />
+    </div>
+  </div>
+
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div>
+      <label className="block text-sm font-bold text-gray-700 mb-2">Date of Birth</label>
+      <input 
+        type="date" 
+        className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" 
+        onChange={(e) => setFormData({...formData, dob: e.target.value})} 
+      />
+    </div>
+    <div>
+      <label className="block text-sm font-bold text-gray-700 mb-2">Date of Joining</label>
+      <input 
+        type="date" 
+        className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" 
+        onChange={(e) => setFormData({...formData, date_of_joining: e.target.value})} 
+      />
+    </div>
+  </div>
+
+  <div>
+    <label className="block text-sm font-bold text-gray-700 mb-2">Skills</label>
+    <input 
+      type="text" 
+      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" 
+      placeholder="e.g. React, SQL, Management"
+      onChange={(e) => setFormData({...formData, skills: e.target.value})} 
+    />
+  </div>
+
+  <div>
+    <label className="block text-sm font-bold text-gray-700 mb-2">Address</label>
+    <textarea 
+      rows="2"
+      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none resize-none" 
+      placeholder="Current residential address"
+      onChange={(e) => setFormData({...formData, address: e.target.value})} 
+    />
+  </div>
+</div>
 
             <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-xl shadow-lg shadow-blue-200 transition-all flex justify-center items-center gap-2">
               <Save size={20} /> CREATE USER

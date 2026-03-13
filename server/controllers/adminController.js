@@ -2,6 +2,8 @@ import db from '../config/db.js';
 import sgMail from '@sendgrid/mail';
 
 
+// 1. GET ALL USERS (Consolidated with Global Search)
+
 // 1. GET ALL USERS (Final Fix for 500 Error)
 export const getAllUsers = async (req, res) => {
   // Force conversion to Integer
@@ -36,9 +38,10 @@ export const getAllUsers = async (req, res) => {
   }
 };
 
-// 2. ADD USER (Updated logic for Non-Employee & ID formatting)
+
+// 2. ADD USER
 export const addUser = async (req, res) => {
-  const { full_name, email, password, isEmployee, isAdmin, designation } = req.body;
+  const { full_name, email, password, isEmployee, isAdmin, designation, mobile, address, dob, date_of_joining, skills, education } = req.body;
   
   try {
     let finalRole = 'employee';
@@ -48,19 +51,27 @@ export const addUser = async (req, res) => {
       finalRole = 'non-employee';
     }
 
-    // FIX: Use null instead of 'NA'
     let employee_id = null; 
 
     if (isEmployee) {
-      // Filter out NULL and 'NA' to get the next count
       const [rows] = await db.execute(
         'SELECT COUNT(*) as count FROM users WHERE employee_id IS NOT NULL AND employee_id != "NA"'
       );
       employee_id = rows[0].count + 1;
     }
 
-    const sql = `INSERT INTO users (full_name, email, password, role, employee_id, designation) VALUES (?, ?, ?, ?, ?, ?)`;
-    await db.execute(sql, [full_name, email, password, finalRole, employee_id, designation]);
+    const sql = `INSERT INTO users (full_name, email, password, role, employee_id, designation, mobile, address, dob, date_of_joining, skills, education) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    const params = [
+      full_name, email, password, finalRole, employee_id, designation,
+      mobile || null,
+      address || null,
+      (dob === "" || !dob ? null : dob),
+      (date_of_joining === "" || !date_of_joining ? null : date_of_joining),
+      skills || null,
+      education || null
+    ];
+
+    await db.execute(sql, params);
 
     res.status(201).json({ message: "User created successfully" });
   } catch (error) {
@@ -71,11 +82,23 @@ export const addUser = async (req, res) => {
 
 // 3. UPDATE PROFILE (Added designation to update logic)
 export const updateProfile = async (req, res) => {
-  const { full_name, email, designation, newPassword, originalEmail } = req.body; // Added designation
+  const { 
+    full_name, email, designation, newPassword, originalEmail,
+    mobile, address, dob, date_of_joining, skills, education 
+  } = req.body; 
+
   try {
-    // Added designation = ? to the base query
-    let query = 'UPDATE users SET full_name = ?, email = ?, designation = ?';
-    let params = [full_name, email, designation || null];
+    let query = `
+      UPDATE users SET 
+        full_name = ?, email = ?, designation = ?, 
+        mobile = ?, address = ?, dob = ?, 
+        date_of_joining = ?, skills = ?, education = ?
+    `;
+    let params = [
+      full_name, email, designation || null,
+      mobile || null, address || null, (dob === "" ? null : dob),
+      (date_of_joining === "" ? null : date_of_joining), skills || null, education || null
+    ];
 
     if (newPassword && newPassword.trim() !== "") {
       query += ', password = ?';
@@ -97,7 +120,7 @@ export const updateProfile = async (req, res) => {
   }
 };
 
-// 4. ADD PROJECT (For Project Hub) - Remaining unchanged
+// 4. ADD PROJECT 
 export const addProject = async (req, res) => {
   try {
     const { project_name } = req.body;
@@ -113,41 +136,52 @@ export const addProject = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
+//5. UPDATE USER PROFILE (Admin Edit) 
 export const updateUserProfile = async (req, res) => {
     try {
         const { id } = req.params;
-        const { full_name, email, designation, role, status, password, employee_id } = req.body;
+        const { full_name, email, designation, role, status, password, employee_id,mobile, address, dob, date_of_joining, skills, education } = req.body;
 
-        // NEW LOGIC: 
-        // 1. If there is a real ID (a number/string), we KEEP it.
-        // 2. If the ID is "NA", empty, or missing, we save it as NULL.
-        // This allows an Admin to keep their Employee ID if they have one.
         const finalEmployeeId = (employee_id && employee_id !== "NA" && employee_id !== "") 
             ? employee_id 
             : null;
 
         let sql;
         let params;
+const commonFields = `
+            full_name=?, email=?, designation=?, role=?, status=?, employee_id=?, 
+            mobile=?, address=?, dob=?, date_of_joining=?, skills=?, education=?
+        `;
+        
+        const commonParams = [
+            full_name, email, designation, role, status, finalEmployeeId,
+            mobile || null, 
+            address || null, 
+            (dob === "" ? null : dob), 
+            (date_of_joining === "" ? null : date_of_joining), 
+            skills || null, 
+            education || null
+        ];
 
         if (password && password.trim() !== "") {
-            sql = `UPDATE users SET full_name=?, email=?, designation=?, role=?, status=?, employee_id=?, password=? WHERE id=?`;
-            params = [full_name, email, designation, role, status, finalEmployeeId, password, id];
+            sql = `UPDATE users SET ${commonFields}, password=? WHERE id=?`;
+            params = [...commonParams, password.trim(), id];
         } else {
-            sql = `UPDATE users SET full_name=?, email=?, designation=?, role=?, status=?, employee_id=? WHERE id=?`;
-            params = [full_name, email, designation, role, status, finalEmployeeId, id];
+            sql = `UPDATE users SET ${commonFields} WHERE id=?`;
+            params = [...commonParams, id];
         }
 
-        const sanitizedParams = params.map(p => p === undefined ? null : p);
-
-        await db.execute(sql, sanitizedParams);
+        await db.execute(sql, params);
         res.status(200).json({ message: "Update successful" });
     } catch (err) {
         console.error("Update Error:", err.message);
         res.status(500).json({ error: err.message });
     }
 };
-// 5. GET PENDING LOGS SUMMARY (New)
-// 5. GET PENDING LOGS SUMMARY (Final Fix)
+
+
+// 6. GET PENDING LOGS SUMMARY (Final Fix)
 export const getPendingLogsSummary = async (req, res) => {
   try {
     // CHANGE: Filter by existence of employee_id. 
@@ -260,7 +294,7 @@ export const getUserById = async (req, res) => {
   const { id } = req.params;
   try {
     const [rows] = await db.execute(
-      'SELECT id, full_name, email, designation, role, employee_id FROM users WHERE id = ?',
+      'SELECT id, full_name, email, designation, role, employee_id ,mobile, address, dob, date_of_joining, skills, education FROM users WHERE id = ?',
       [id]
     );
 
@@ -306,4 +340,45 @@ export const resolveResetRequest = async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
+};
+
+// NEW: Dedicated Search Controller
+export const searchUsers = async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 7;
+  const searchTerm = req.query.search || "";
+  const offset = (page - 1) * limit;
+
+  try {
+    // This query does two things:
+    // 1. WHERE: It hides anyone who doesn't match the search (Nikhil will be hidden)
+    // 2. ORDER BY CASE: It puts "Starts With" matches at the top (Sadhana moves to #1)
+    const [rows] = await db.query(
+      `SELECT id, full_name, email, designation, role, employee_id, status 
+       FROM users 
+       WHERE (full_name LIKE ? OR email LIKE ?)
+       ORDER BY 
+         (CASE 
+            WHEN full_name LIKE ? THEN 1 -- Starts with 'S'
+            ELSE 2                       -- Contains 'S' anywhere else
+          END), 
+         full_name ASC 
+       LIMIT ? OFFSET ?`,
+      [`%${searchTerm}%`, `%${searchTerm}%`, `${searchTerm}%`, limit, offset]
+    );
+
+    const [totalRows] = await db.query(
+      'SELECT COUNT(*) as count FROM users WHERE full_name LIKE ? OR email LIKE ?',
+      [`%${searchTerm}%`, `%${searchTerm}%`]
+    );
+
+    res.status(200).json({
+      users: rows,
+      totalPages: Math.ceil(totalRows[0].count / limit),
+      totalUsers: totalRows[0].count
+    });
+  } catch (error) {
+    console.error("Search Logic Error:", error.message);
+    res.status(500).json({ message: "Search failed" });
+  }
 };

@@ -25,7 +25,11 @@ const loggedInUser = JSON.parse(sessionStorage.getItem("user"));
   const [editingDate, setEditingDate] = useState(null); 
   const [persistedDates, setPersistedDates] = useState(new Set()); 
   const [viewData, setViewData] = useState(null);
-  const [allEmployees, setAllEmployees] = useState([]); // New state for dropdown
+  
+
+const [isCustomRange, setIsCustomRange] = useState(false);
+const [customStartDate, setCustomStartDate] = useState("");
+const [customEndDate, setCustomEndDate] = useState("");
 
   const todayStr = new Date().toLocaleDateString('en-CA');
   const isWeekEditable = selectedWeek <= 1;
@@ -59,30 +63,6 @@ useEffect(() => {
   if (!savedUser) { navigate('/'); } else { setUser(savedUser); }
 }, [navigate]);
 
-  // FETCH EMPLOYEES: Targets your existing GET /api/admin/users route
-  // FETCH EMPLOYEES: Targets your existing route and filters for 'employee' only
-  useEffect(() => {
-  fetch(`${API_BASE_URL}/admin/users`)
-    .then(res => res.json())
-    .then(data => {
-      // 1. Access the 'users' array from the object your controller sends
-      if (data && Array.isArray(data.users)) {
-        
-        // 2. Filter logic: 
-        // - Must have an employee_id (not null or empty string)
-        // - Should not be the person currently logged in
-        const validEmployees = data.users.filter(emp => 
-          emp.employee_id && 
-          emp.employee_id !== "" && 
-          emp.id !== loggedInUser?.id
-        );
-
-        setAllEmployees(validEmployees);
-      }
-    })
-    .catch(err => console.error("Dropdown fetch error:", err));
-}, [loggedInUser?.id]);
-  
 useEffect(() => {
     const fetchData = async () => {
       if (!effectiveUserId) return; 
@@ -115,7 +95,7 @@ const response = await fetch(`${API_BASE_URL}/tasks/get-logs/${effectiveUserId}`
       } catch (error) { console.error("Fetch error:", error); }
     };
     fetchData();
-  }, [effectiveUserId, selectedWeek]);
+  }, [effectiveUserId, selectedWeek,customStartDate, customEndDate, isCustomRange, API_BASE_URL]);
 
   const handleLogout = () => {
     sessionStorage.clear();
@@ -179,8 +159,50 @@ const response = await fetch(`${API_BASE_URL}/tasks/get-logs/${effectiveUserId}`
     return ranges;
   };
 
+
+
+
+// 1. Core constants (Define these before functions)
+ 
   const weekData = getWeekRanges();
-  const currentDays = weekData[selectedWeek].days;
+  
+  // 2. The decision function
+  const getDisplayDays = () => {
+    // If user is using custom filter and has both dates
+    if (isCustomRange && customStartDate && customEndDate) {
+      const days = [];
+      let start = new Date(customStartDate);
+      let end = new Date(customEndDate);
+      
+      if (end < start) return [];
+
+      let current = new Date(start);
+      let safetyCount = 0; 
+      
+      // Limit to 31 days to prevent Vite/Browser hanging
+      while (current <= end && safetyCount < 31) {
+        const dbDate = current.toLocaleDateString('en-CA');
+        const dayName = current.toLocaleDateString('en-US', { weekday: 'long' });
+        days.push({
+          name: dayName,
+          date: current.toLocaleDateString('en-GB'),
+          dbDate,
+          isFuture: dbDate > todayStr,
+          isWeekOff: dayName === 'Saturday' || dayName === 'Sunday'
+        });
+        current.setDate(current.getDate() + 1);
+        safetyCount++;
+      }
+      return days;
+    }
+    
+    // Fallback to standard 8-week dropdown
+    return weekData[selectedWeek]?.days || [];
+  };
+
+  // 3. THE ONLY VARIABLE FOR THE TABLE
+  // Replace both 'currentDays' and 'displayDays' with this single line:
+  const currentDays = getDisplayDays();
 
   const handleInputChange = (date, field, value) => {
     setLogData((prev) => {
@@ -287,18 +309,6 @@ const response = await fetch(`${API_BASE_URL}/tasks/get-logs/${effectiveUserId}`
       <nav className="bg-white border-b border-gray-200 px-4 md:px-8 py-4 flex justify-between items-center sticky top-0 z-50">
         <h1 className="text-lg font-bold text-blue-600 leading-none">Hello, {user?.name || 'User'}, Welcome to Suchana Enterprises!!</h1>
 
-        {/* DROPDOWN: Only for normal employees */}
-        {loggedInUser?.role?.toLowerCase() === 'employee' && (
-          <select 
-            className="bg-gray-100 border-none text-xs font-bold p-2 rounded-lg outline-none cursor-pointer"
-            onChange={(e) => { if(e.target.value) navigate(`/view-logs/${e.target.value}`); }}
-          >
-            <option value="">View Employees</option>
-            {allEmployees.map(emp => (
-              <option key={emp.id} value={emp.id}>{emp.full_name}</option>
-            ))}
-          </select>
-        )}
 
         <div className="flex gap-4">
           <button onClick={() => navigate('/profile')} className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:bg-gray-100 p-2 rounded-lg"><User size={18} /> Profile</button>
@@ -340,12 +350,65 @@ const response = await fetch(`${API_BASE_URL}/tasks/get-logs/${effectiveUserId}`
         )}
         <div className="mb-4 bg-gray-900 text-white p-4 rounded-2xl shadow-sm"><h2 className="text-sm font-black uppercase tracking-[0.2em]">Weekly Task Entry</h2></div>
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="p-5 border-b border-gray-100 flex items-center gap-4 bg-gray-50/30">
-            <Calendar className="text-blue-600" size={20} />
-            <select className="w-full md:w-64 bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-bold outline-none" value={selectedWeek} onChange={(e) => setSelectedWeek(parseInt(e.target.value))}>
-              {weekData.map((range, idx) => (<option key={idx} value={idx}>{range.label}</option>))}
-            </select>
-          </div>
+
+
+         <div className="p-5 border-b border-gray-100 flex flex-wrap items-center gap-4 bg-gray-50/30">
+  <div className="flex items-center gap-2">
+    <Calendar className="text-blue-600" size={20} />
+    {!isCustomRange ? (
+      <select 
+        className="w-full md:w-64 bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm font-bold outline-none" 
+        value={selectedWeek} 
+        onChange={(e) => setSelectedWeek(parseInt(e.target.value))}
+      >
+        {weekData.map((range, idx) => (<option key={idx} value={idx}>{range.label}</option>))}
+      </select>
+    ) : (
+      <div className="flex items-center gap-2">
+        <input 
+          type="date" 
+          className="border rounded-lg px-2 py-1 text-sm font-bold"
+          value={customStartDate}
+          onChange={(e) => setCustomStartDate(e.target.value)}
+        />
+        <span className="text-xs font-bold text-gray-400">TO</span>
+        <input 
+          type="date" 
+          className="border rounded-lg px-2 py-1 text-sm font-bold"
+          value={customEndDate}
+          onChange={(e) => setCustomEndDate(e.target.value)}
+        />
+      </div>
+    )}
+  </div>
+
+  <div className="flex gap-2">
+    {/* Toggle Button */}
+    <button 
+      onClick={() => setIsCustomRange(!isCustomRange)}
+      className="text-[10px] font-black uppercase tracking-wider px-3 py-1 bg-blue-100 text-blue-600 rounded-md hover:bg-blue-200"
+    >
+      {isCustomRange ? "Standard Weeks" : "Custom Range"}
+    </button>
+
+    {/* Sync Button: Resets to Current Week */}
+    <button 
+      onClick={() => {
+        setIsCustomRange(false);
+        setSelectedWeek(0);
+        setCustomStartDate("");
+        setCustomEndDate("");
+        toast.success("Synced to current week");
+      }}
+      className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg transition-colors"
+      title="Sync to Default"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" size={16} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>
+    </button>
+  </div>
+</div>
+
+
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead className="bg-gray-50 border-b border-gray-100 uppercase text-[11px] font-black text-gray-400">

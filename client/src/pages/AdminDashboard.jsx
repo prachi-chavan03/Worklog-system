@@ -17,6 +17,7 @@ const AdminDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
 const [totalPages, setTotalPages] = useState(1);
 const [totalUsersCount, setTotalUsersCount] = useState(0); // For the 'Total Users' stat card
+const [searchTerm, setSearchTerm] = useState("");
   
   // Project State
   const [projects, setProjects] = useState([]);
@@ -36,19 +37,19 @@ const currentUser = JSON.parse(sessionStorage.getItem('user')) || {};
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const userRes = await fetch(`${API_BASE_URL}/admin/users?page=${currentPage}&limit=7`);
-        const userData = await userRes.json();
+     const userUrl = searchTerm.trim() 
+        ? `${API_BASE_URL}/admin/search-users?search=${searchTerm}&page=${currentPage}&limit=7`
+        : `${API_BASE_URL}/admin/users?page=${currentPage}&limit=7`;
 
-if (userRes.ok) {
-  // IMPORTANT: Since backend now sends an object, we access userData.users
-  setUsers(userData.users); 
-  setTotalPages(userData.totalPages);
-  setTotalUsersCount(userData.totalUsers);
-}
+      const userRes = await fetch(userUrl);
+      const userData = await userRes.json();
 
-        const projRes = await fetch(`${API_BASE_URL}/tasks/projects`);
-        const projData = await projRes.json();
-        if (projRes.ok) setProjects(projData);
+      if (userRes.ok) {
+        setUsers(userData.users); 
+        setTotalPages(userData.totalPages);
+        // Only update the dashboard counter when NOT searching
+        if (!searchTerm.trim()) setTotalUsersCount(userData.totalUsers);
+      }
 
         // Fetch pending logs summary
         const pendingRes = await fetch(`${API_BASE_URL}/admin/pending-logs-summary`);
@@ -65,7 +66,7 @@ if (userRes.ok) {
       }
     };
     fetchData();
-  }, [currentPage]);
+  }, [currentPage,searchTerm, API_BASE_URL]);
 
   const handleAddProject = async () => {
     if (!newProject.trim()) return toast.error("Project name required");
@@ -303,14 +304,44 @@ if (userRes.ok) {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-              <h2 className={`text-xl font-black ${darkMode ? 'text-white' : 'text-gray-800'}`}>User Management</h2>
-              <button onClick={() => navigate('/add-user')} className="w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl font-bold text-sm shadow-lg transition-all">
-                <UserPlus size={18} /> Add New User
-              </button>
-            </div>
+
+        
+<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+  <div className="lg:col-span-2">
+    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+      <h2 className={`text-xl font-black ${darkMode ? 'text-white' : 'text-gray-800'}`}>User Management</h2>
+      
+      {/* Container for Search and Add User */}
+      <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+        
+        {/* Search Input Filter */}
+        <div className="relative w-full sm:w-64">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Users size={16} className="text-gray-400" />
+          </div>
+          <input
+            type="text"
+            placeholder="Search users..."
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1); // Crucial: Reset to page 1 to find users across the whole DB
+            }}
+            className={`w-full pl-10 pr-4 py-3 rounded-xl border text-sm font-bold outline-none transition-all ${
+              darkMode 
+                ? 'bg-gray-800 border-gray-700 text-white focus:border-blue-500' 
+                : 'bg-white border-gray-100 text-gray-900 focus:border-blue-500 shadow-sm'
+            }`}
+          />
+        </div>
+
+        {/* Your Existing Add User Button */}
+        <button onClick={() => navigate('/add-user')} className="w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl font-bold text-sm shadow-lg transition-all whitespace-nowrap">
+          <UserPlus size={18} /> Add New User
+        </button>
+      </div>
+    </div>
+            
             <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-2xl shadow-sm border overflow-hidden`}>
               <table className="w-full text-left">
                 <thead className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'} border-b border-gray-100`}>

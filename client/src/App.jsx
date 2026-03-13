@@ -13,7 +13,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 function App() {
   return (
     <Router>
-      <Toaster position="top-right" reverseOrder={false} /> 
+      <Toaster position="top-center" reverseOrder={false} /> 
     
       <Routes>
         {/* PUBLIC ROUTE */}

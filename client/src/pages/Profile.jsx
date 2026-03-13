@@ -2,7 +2,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Mail, Shield, ArrowLeft, Briefcase, Lock } from 'lucide-react'; 
+import { User, Mail, Shield, ArrowLeft, Briefcase, Lock,Phone, MapPin, Cake, GraduationCap, Wrench } from 'lucide-react'; 
 import toast from 'react-hot-toast';
 
 const Profile = () => {
@@ -24,7 +24,15 @@ const Profile = () => {
     isAdmin: false,
     status: 'active', 
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+
+    mobile: '',
+  address: '',
+  dob: '',
+  date_of_joining: '',
+  skills: '',
+  education: ''
+
   });
 
   // Updated to sessionStorage
@@ -66,7 +74,14 @@ const Profile = () => {
       status: formData.status || 'active',
       password: formData.password || '',
       // Always preserve the employee_id if it exists
-      employee_id: hasEmployeeId || null 
+      employee_id: hasEmployeeId || null ,
+
+      mobile: formData.mobile,
+  address: formData.address,
+  dob: formData.dob,
+  date_of_joining: formData.date_of_joining,
+  skills: formData.skills,
+  education: formData.education,
     };
 
     const response = await fetch(`${API_BASE_URL}/admin/update-user/${targetUserId}`, {
@@ -108,8 +123,17 @@ const Profile = () => {
               role: data.userRole || 'Employee',
               status: data.userStatus || 'active',
               employee_id: data.userEmployeeId,
-              id: targetUserId
+              id: targetUserId,
+
+      mobile: data.userMobile || '',
+    address: data.userAddress || '',
+    // Use .split('T')[0] to turn "2024-05-20T00:00:00.000Z" into "2024-05-20"
+    dob: data.userDob ? data.userDob.split('T')[0] : '',
+    date_of_joining: data.userDoj ? data.userDoj.split('T')[0] : '',
+    skills: data.userSkills || '',
+    education: data.userEducation || '',
             };
+            
             
             setUserData(fetchedUser);
             setFormData({
@@ -120,7 +144,14 @@ const Profile = () => {
               isAdmin: (data.userRole || "").toLowerCase() === 'admin',
               status: fetchedUser.status, 
               password: '',
-              confirmPassword: ''
+              confirmPassword: '',
+
+              mobile: fetchedUser.mobile,
+    address: fetchedUser.address,
+    dob: fetchedUser.dob,
+    date_of_joining: fetchedUser.date_of_joining,
+    skills: fetchedUser.skills,
+    education: fetchedUser.education,
             });
           }
         } catch (err) {
@@ -260,6 +291,119 @@ const Profile = () => {
                 </div>
               </div>
             </div>
+        {/* NEW FIELDS SECTION */}
+{/* NEW FIELDS SECTION */}
+<div className="pt-6 border-t border-gray-100">
+  <h2 className="text-sm font-black text-blue-600 uppercase tracking-widest mb-4">Personal & Professional Details</h2>
+  
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    {/* Mobile */}
+    <div>
+      <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Mobile Number</label>
+      {isEditMode ? (
+        <input 
+          type="text" 
+          className="w-full px-4 py-3 rounded-xl border border-gray-200 font-bold outline-none focus:ring-2 focus:ring-blue-500"
+          value={formData.mobile}
+          onChange={(e) => setFormData({...formData, mobile: e.target.value})}
+        />
+      ) : (
+        <div className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-100 font-bold text-gray-700">
+          {userData.mobile || "Not Provided"}
+        </div>
+      )}
+    </div>
+
+    {/* Education */}
+    <div>
+      <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Education</label>
+      {isEditMode ? (
+        <input 
+          type="text" 
+          className="w-full px-4 py-3 rounded-xl border border-gray-200 font-bold outline-none focus:ring-2 focus:ring-blue-500"
+          value={formData.education}
+          onChange={(e) => setFormData({...formData, education: e.target.value})}
+        />
+      ) : (
+        <div className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-100 font-bold text-gray-700">
+          {userData.education || "Not Provided"}
+        </div>
+      )}
+    </div>
+  </div>
+
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+    {/* Date of Birth */}
+    <div>
+      <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Date of Birth</label>
+      {isEditMode ? (
+        <input 
+          type="date" 
+          className="w-full px-4 py-3 rounded-xl border border-gray-200 font-bold outline-none focus:ring-2 focus:ring-blue-500"
+          value={formData.dob}
+          onChange={(e) => setFormData({...formData, dob: e.target.value})}
+        />
+      ) : (
+        <div className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-100 font-bold text-gray-700">
+          {userData.dob || "Not Provided"}
+        </div>
+      )}
+    </div>
+
+    {/* Date of Joining */}
+    <div>
+      <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Date of Joining</label>
+      {isEditMode ? (
+        <input 
+          type="date" 
+          className="w-full px-4 py-3 rounded-xl border border-gray-200 font-bold outline-none focus:ring-2 focus:ring-blue-500"
+          value={formData.date_of_joining}
+          onChange={(e) => setFormData({...formData, date_of_joining: e.target.value})}
+        />
+      ) : (
+        <div className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-100 font-bold text-gray-700">
+          {userData.date_of_joining || "Not Provided"}
+        </div>
+      )}
+    </div>
+  </div>
+
+  {/* Full Width Fields */}
+  <div className="mt-6 space-y-6">
+    <div>
+      <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Skills</label>
+      {isEditMode ? (
+        <input 
+          type="text" 
+          placeholder="e.g. React, Node.js, SQL"
+          className="w-full px-4 py-3 rounded-xl border border-gray-200 font-bold outline-none focus:ring-2 focus:ring-blue-500"
+          value={formData.skills}
+          onChange={(e) => setFormData({...formData, skills: e.target.value})}
+        />
+      ) : (
+        <div className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-100 font-bold text-gray-700">
+          {userData.skills || "No skills listed"}
+        </div>
+      )}
+    </div>
+
+    <div>
+      <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Address</label>
+      {isEditMode ? (
+        <textarea 
+          rows="2"
+          className="w-full px-4 py-3 rounded-xl border border-gray-200 font-bold outline-none resize-none focus:ring-2 focus:ring-blue-500"
+          value={formData.address}
+          onChange={(e) => setFormData({...formData, address: e.target.value})}
+        />
+      ) : (
+        <div className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-100 font-bold text-gray-700 whitespace-pre-wrap">
+          {userData.address || "No address provided"}
+        </div>
+      )}
+    </div>
+  </div>
+</div>
 
             {/* ADMIN CHECKBOX COMPONENT */}
             {isEditMode && isAdminEditingOthers && (
@@ -350,7 +494,6 @@ const Profile = () => {
                 </div>
               </div>
             )}
-
             {isEditMode && isAdminEditingOthers && (
               <div className="pt-4">
                 <button 

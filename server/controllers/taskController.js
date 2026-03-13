@@ -13,6 +13,13 @@ export const getUserDetails = async (req, res) => {
                 u.designation AS userDesignation,
                 u.status AS userStatus,
                 u.employee_id,
+u.mobile AS userMobile,
+                u.address AS userAddress,
+                u.dob AS userDob,
+                u.date_of_joining AS userDoj,
+                u.skills AS userSkills,
+                u.education AS userEducation,
+
                 wl.work_date, 
                 wl.hours_worked, 
                 wl.task_description, 
@@ -39,6 +46,13 @@ export const getUserDetails = async (req, res) => {
             userDesignation: rows[0].userDesignation,
             userStatus: rows[0].userStatus,
             userEmployeeId: rows[0].employee_id, 
+userMobile: rows[0].userMobile,
+            userAddress: rows[0].userAddress,
+            userDob: rows[0].userDob,
+            userDoj: rows[0].userDoj,
+            userSkills: rows[0].userSkills,
+            userEducation: rows[0].userEducation,
+
             logs: rows[0].work_date ? rows : [] 
         };
 
