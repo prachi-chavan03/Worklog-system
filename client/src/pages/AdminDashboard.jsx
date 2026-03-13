@@ -53,6 +53,10 @@ const currentUser = JSON.parse(sessionStorage.getItem('user')) || {};
         if (!searchTerm.trim()) setTotalUsersCount(userData.totalUsers);
       }
 
+// Fetch projects for the dropdown
+      const projRes = await fetch(`${API_BASE_URL}/tasks/projects`);
+        const projData = await projRes.json();
+        if (projRes.ok) setProjects(projData);
         // Fetch pending logs summary
         const pendingRes = await fetch(`${API_BASE_URL}/admin/pending-logs-summary`);
         const pendingData = await pendingRes.json();
