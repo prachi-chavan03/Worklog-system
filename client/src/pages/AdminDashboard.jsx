@@ -13,10 +13,12 @@ const AdminDashboard = () => {
   const API_BASE_URL = import.meta.env.VITE_API_URL;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [users, setUsers] = useState([]);
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+  return localStorage.getItem('theme') === 'dark';
+});
   const [currentPage, setCurrentPage] = useState(1);
 const [totalPages, setTotalPages] = useState(1);
-const [totalUsersCount, setTotalUsersCount] = useState(0); // For the 'Total Users' stat card
+const [totalUsersCount, setTotalUsersCount] = useState(0); 
 const [searchTerm, setSearchTerm] = useState("");
   
   // Project State
@@ -113,8 +115,6 @@ const currentUser = JSON.parse(sessionStorage.getItem('user')) || {};
   toast.success("Logged out successfully");
   navigate('/');
 };
-   
-    //Resolve for reset pass req
     const handleResolveRequest = async (requestId) => {
   // This matches the /resolve-reset/:id route above
   const res = await fetch(`${API_BASE_URL}/admin/resolve-reset/${requestId}`, { 
@@ -132,9 +132,16 @@ const currentUser = JSON.parse(sessionStorage.getItem('user')) || {};
       <nav className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b px-4 md:px-8 py-4 flex justify-between items-center sticky top-0 z-50 shadow-sm`}>
         <h1 className="text-xl font-bold text-blue-600">Worklog <span className={darkMode ? 'text-white' : 'text-gray-900'}>Admin</span></h1>
         <div className="hidden md:flex items-center gap-4">
-          <button onClick={() => setDarkMode(!darkMode)} className={`p-2 rounded-lg transition-colors ${darkMode ? 'bg-gray-700 text-yellow-400 hover:bg-gray-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
-            {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-          </button>
+          <button 
+  onClick={() => {
+    const newMode = !darkMode;
+    setDarkMode(newMode);
+    localStorage.setItem('theme', newMode ? 'dark' : 'light');
+  }} 
+  className={`p-2 rounded-lg transition-colors ${darkMode ? 'bg-gray-700 text-yellow-400 hover:bg-gray-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+>
+  {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+</button>
           {currentUser.employee_id && (
     <button 
       /* ❌ CHANGE: navigate('/user-home') */

@@ -6,11 +6,9 @@ import adminRoutes from './routes/adminRoutes.js';
 import taskRoutes from './routes/taskRoutes.js';
 
 const app = express();
-
 // --- UPDATED CORS SECTION ---
 app.use(cors());
 // ----------------------------
-
 app.use(express.json());
 
 // Routes
