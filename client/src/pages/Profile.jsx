@@ -109,77 +109,61 @@ const Profile = () => {
   }
 };
   useEffect(() => {
-    const fetchUserData = async () => {
-      if (targetUserId) {
-        try {
-          const response = await fetch(`${API_BASE_URL}/tasks/get-user-info/${targetUserId}`);
-          const data = await response.json();
+  const fetchUserData = async () => {
+    // 1. Get the current session user
+    const savedUser = JSON.parse(sessionStorage.getItem("user"));
+    
+    // 2. Identify whose ID we need: either the URL param OR the logged-in user's ID
+    const idToFetch = targetUserId || savedUser?.id;
 
-          if (response.ok) {
-            const fetchedUser = {
-              full_name: data.userName || "User",
-              email: data.userEmail || '', 
-              designation: data.userDesignation || '',
-              role: data.userRole || 'Employee',
-              status: data.userStatus || 'active',
-              employee_id: data.userEmployeeId,
-              id: targetUserId,
+    if (idToFetch) {
+      try {
+        const response = await fetch(`${API_BASE_URL}/tasks/get-user-info/${idToFetch}`);
+        const data = await response.json();
 
-      mobile: data.userMobile || '',
-    address: data.userAddress || '',
-    // Use .split('T')[0] to turn "2024-05-20T00:00:00.000Z" into "2024-05-20"
-    dob: data.userDob ? data.userDob.split('T')[0] : '',
-    date_of_joining: data.userDoj ? data.userDoj.split('T')[0] : '',
-    skills: data.userSkills || '',
-    education: data.userEducation || '',
-            };
-            
-            
-            setUserData(fetchedUser);
-            setFormData({
-              full_name: fetchedUser.full_name,
-              email: fetchedUser.email,
-              designation: fetchedUser.designation,
-              role: fetchedUser.role,
-              isAdmin: (data.userRole || "").toLowerCase() === 'admin',
-              status: fetchedUser.status, 
-              password: '',
-              confirmPassword: '',
+        if (response.ok) {
+          const fetchedUser = {
+            full_name: data.userName || "User",
+            email: data.userEmail || '',
+            designation: data.userDesignation || '',
+            role: data.userRole || 'Employee',
+            status: data.userStatus || 'active',
+            employee_id: data.userEmployeeId,
+            id: idToFetch,
+            mobile: data.userMobile || '',
+            address: data.userAddress || '',
+            dob: data.userDob ? data.userDob.split('T')[0] : '',
+            date_of_joining: data.userDoj ? data.userDoj.split('T')[0] : '',
+            skills: data.userSkills || '',
+            education: data.userEducation || '',
+          };
 
-              mobile: fetchedUser.mobile,
-    address: fetchedUser.address,
-    dob: fetchedUser.dob,
-    date_of_joining: fetchedUser.date_of_joining,
-    skills: fetchedUser.skills,
-    education: fetchedUser.education,
-            });
-          }
-        } catch (err) {
-          console.error("Error fetching target user:", err);
-        }
-      } else {
-        // Updated to sessionStorage and fixed the fetchedUser scope bug
-        const savedUser = JSON.parse(sessionStorage.getItem("user"));
-        if (savedUser) {
-          setUserData(savedUser);
+          setUserData(fetchedUser);
           setFormData({
-            full_name: savedUser.full_name || savedUser.name,
-            email: savedUser.email,
-            designation: savedUser.designation || '',
-            role: savedUser.role,
-            isAdmin: (savedUser.role || "").toLowerCase() === 'admin',
-            status: 'active',
+            ...fetchedUser, // Spread the fetched data directly
+            isAdmin: (data.userRole || "").toLowerCase() === 'admin',
             password: '',
-            confirmPassword: ''
+            confirmPassword: '',
           });
-        } else {
-          navigate('/');
-        }
-      }
-    };
 
-    fetchUserData();
-  }, [targetUserId, navigate]);
+          // 3. SYNC STEP: If the user is viewing THEIR OWN profile, 
+          // update sessionStorage so the Header/Sidebar reflects the Admin's changes immediately.
+          if (!targetUserId || targetUserId === savedUser?.id) {
+            const updatedSession = { ...savedUser, ...fetchedUser };
+            sessionStorage.setItem("user", JSON.stringify(updatedSession));
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching user data:", err);
+      }
+    } else {
+      navigate('/');
+    }
+  };
+
+  fetchUserData();
+}, [targetUserId, navigate, API_BASE_URL]);
+ 
 
   if (!userData) return <div className="p-10 text-center font-bold">Loading Profile...</div>;
 
@@ -494,6 +478,7 @@ const Profile = () => {
                 </div>
               </div>
             )}
+
             {isEditMode && isAdminEditingOthers && (
               <div className="pt-4">
                 <button 
