@@ -33,7 +33,7 @@ export const login = async (req, res) => {
     const token = jwt.sign(
       { id: user.id, role: user.role },
       secret,
-      { expiresIn: '1d' }
+      { expiresIn: '12h' }
     );
 
     // 4. Send response including the ROLE and DESIGNATION
