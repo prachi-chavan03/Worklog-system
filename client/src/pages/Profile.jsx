@@ -15,6 +15,20 @@ const Profile = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    // Check if dark mode was enabled in another page
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+      setIsDarkMode(true);
+      document.documentElement.classList.add('dark');
+    } else {
+      setIsDarkMode(false);
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
   
   const [formData, setFormData] = useState({
     full_name: '',
@@ -170,26 +184,26 @@ const Profile = () => {
   const isAdmin = userData.role === 'Admin' || userData.role === 'admin';
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-8 font-sans text-gray-900">
+   <div className="min-h-screen dark:bg-gray-900 bg-gray-50 dark:bg-gray-900 p-4 md:p-8 font-sans text-gray-900 dark:text-white transition-colors duration-300">
       <div className="max-w-2xl mx-auto">
-        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-500 hover:text-blue-600 mb-6 font-bold transition-all">
+        <button onClick={() => navigate(-1)} className="flex items-center gap-2 dark:text-gray-400 text-gray-500 hover:text-blue-600 mb-6 font-bold transition-all">
           <ArrowLeft size={20} /> Back to Dashboard
         </button>
 
-        <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
-          <div className="bg-white border-b border-gray-100 p-8 flex justify-between items-center">
+        <div className="bg-white dark:bg-gray-800 dark:border-gray-700 rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
+          <div className="bg-white border-b border-gray-100 dark:bg-gray-800 dark:border-gray-700 p-8 flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-black text-gray-800">
+              <h1 className="text-2xl font-black dark:text-white text-gray-800">
                 {isAdminEditingOthers ? "Edit User Profile" : "My Profile"}
               </h1>
-              <p className="text-gray-400 text-sm font-bold uppercase tracking-widest mt-1">
+              <p className="text-gray-400 dark:text-gray-500 text-sm font-bold uppercase tracking-widest mt-1">
                 {isAdmin ? 'Administrator Account' : 'User Account'}
               </p>
             </div>
             {isAdminEditingOthers && (
               <button 
                 onClick={() => setIsEditMode(!isEditMode)}
-                className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${isEditMode ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}
+                className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${isEditMode ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' : 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'}`}
               >
                 {isEditMode ? 'CANCEL' : 'EDIT PROFILE'}
               </button>
@@ -199,7 +213,7 @@ const Profile = () => {
           <div className="p-8 space-y-6">
             {/* NAME SECTION */}
             <div>
-              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Full Name</label>
+              <label className="block text-[10px] dark:text-gray-500 font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Full Name</label>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                   <User size={18} className="text-blue-600" />
@@ -207,12 +221,12 @@ const Profile = () => {
                 {isEditMode ? (
                   <input 
                     type="text" 
-                    className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none font-bold"
+                    className="w-full pl-11 pr-4 py-3 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none font-bold"
                     value={formData.full_name}
                     onChange={(e) => setFormData({...formData, full_name: e.target.value})}
                   />
                 ) : (
-                  <div className="w-full pl-11 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-100 font-bold text-gray-700">
+                  <div className="w-full pl-11 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-100 dark:bg-gray-700/50 dark:border-gray-600 dark:text-gray-200 font-bold text-gray-700">
                     {userData.full_name || userData.name}
                   </div>
                 )}
@@ -234,7 +248,7 @@ const Profile = () => {
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
                   />
                 ) : (
-                  <div className="w-full pl-11 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-100 font-bold text-gray-500">
+                  <div className="w-full pl-11 pr-4 py-3 rounded-xl dark:bg-gray-700/50 dark:border-gray-600 dark:text-gray-200 bg-gray-50 border border-gray-100 font-bold text-gray-500">
                     {userData.email}
                   </div>
                 )}
@@ -256,7 +270,7 @@ const Profile = () => {
                     onChange={(e) => setFormData({...formData, designation: e.target.value})}
                   />
                 ) : (
-                  <div className="w-full pl-11 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-100 font-bold text-gray-700">
+                  <div className="w-full pl-11 pr-4 py-3 dark:bg-gray-700/50 dark:border-gray-600 dark:text-gray-200 rounded-xl bg-gray-50 border border-gray-100 font-bold text-gray-700">
                     {userData.designation || "Not Set"}
                   </div>
                 )}
@@ -270,7 +284,7 @@ const Profile = () => {
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center">
                   <Shield size={18} className="text-blue-600" />
                 </div>
-                <div className="w-full pl-11 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-100 font-bold text-gray-700 capitalize">
+                <div className="w-full pl-11 pr-4 py-3 dark:bg-gray-700/50 dark:border-gray-600 dark:text-gray-200 rounded-xl bg-gray-50 border border-gray-100 font-bold text-gray-700 capitalize">
                   {userData.role}
                 </div>
               </div>
@@ -292,7 +306,7 @@ const Profile = () => {
           onChange={(e) => setFormData({...formData, mobile: e.target.value})}
         />
       ) : (
-        <div className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-100 font-bold text-gray-700">
+        <div className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-100 font-bold text-gray-700 dark:bg-gray-700/50 dark:border-gray-600 dark:text-gray-200">
           {userData.mobile || "Not Provided"}
         </div>
       )}
@@ -309,7 +323,7 @@ const Profile = () => {
           onChange={(e) => setFormData({...formData, education: e.target.value})}
         />
       ) : (
-        <div className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-100 font-bold text-gray-700">
+        <div className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-100 font-bold text-gray-700 dark:bg-gray-700/50 dark:border-gray-600 dark:text-gray-200">
           {userData.education || "Not Provided"}
         </div>
       )}
@@ -328,7 +342,7 @@ const Profile = () => {
           onChange={(e) => setFormData({...formData, dob: e.target.value})}
         />
       ) : (
-        <div className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-100 font-bold text-gray-700">
+        <div className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-100 font-bold text-gray-700 dark:bg-gray-700/50 dark:border-gray-600 dark:text-gray-200">
           {userData.dob || "Not Provided"}
         </div>
       )}
@@ -345,7 +359,7 @@ const Profile = () => {
           onChange={(e) => setFormData({...formData, date_of_joining: e.target.value})}
         />
       ) : (
-        <div className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-100 font-bold text-gray-700">
+        <div className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-100 font-bold text-gray-700 dark:bg-gray-700/50 dark:border-gray-600 dark:text-gray-200">
           {userData.date_of_joining || "Not Provided"}
         </div>
       )}
@@ -365,7 +379,7 @@ const Profile = () => {
           onChange={(e) => setFormData({...formData, skills: e.target.value})}
         />
       ) : (
-        <div className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-100 font-bold text-gray-700">
+        <div className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-100 font-bold text-gray-700 dark:bg-gray-700/50 dark:border-gray-600 dark:text-gray-200">
           {userData.skills || "No skills listed"}
         </div>
       )}
@@ -381,7 +395,7 @@ const Profile = () => {
           onChange={(e) => setFormData({...formData, address: e.target.value})}
         />
       ) : (
-        <div className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-100 font-bold text-gray-700 whitespace-pre-wrap">
+        <div className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-100 font-bold text-gray-700 whitespace-pre-wrap dark:bg-gray-700/50 dark:border-gray-600 dark:text-gray-200">
           {userData.address || "No address provided"}
         </div>
       )}
@@ -391,7 +405,7 @@ const Profile = () => {
 
             {/* ADMIN CHECKBOX COMPONENT */}
             {isEditMode && isAdminEditingOthers && (
-              <div className="flex items-center gap-3 p-4 bg-purple-50 rounded-xl border border-purple-100 mt-2">
+              <div className="flex items-center gap-3 p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl border border-purple-100 dark:border-purple-800/50 mt-2">
                 <input 
                   type="checkbox" 
                   id="adminCheck" 
@@ -399,7 +413,7 @@ const Profile = () => {
                   className="w-5 h-5 accent-purple-600 cursor-pointer"
                   onChange={(e) => setFormData({...formData, isAdmin: e.target.checked})} 
                 />
-                <label htmlFor="adminCheck" className="text-sm font-bold text-purple-800 cursor-pointer">
+                <label htmlFor="adminCheck" className="text-sm font-bold text-purple-800 dark:text-purple-300 cursor-pointer">
                   Assign Admin Role (Access to full management)
                 </label>
               </div>
@@ -407,9 +421,9 @@ const Profile = () => {
 
             {/* ACCOUNT STATUS SECTION */}
             {isEditMode && isAdminEditingOthers && (
-              <div className="pt-4 border-t border-dashed space-y-2">
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Account Status</label>
-                <div className="flex items-center gap-3 bg-gray-50 p-3 rounded-xl border border-gray-100">
+              <div className="pt-4 border-t border-dashed dark:border-gray-700 space-y-2">
+               <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Account Status</label>
+               <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-700/50 p-3 rounded-xl border border-gray-100 dark:border-gray-600">
                   <input 
                     type="checkbox"
                     id="statusToggle"
@@ -420,7 +434,7 @@ const Profile = () => {
                       status: e.target.checked ? 'active' : 'inactive'
                     })}
                   />
-                  <label htmlFor="statusToggle" className="font-bold text-sm text-gray-700 cursor-pointer">
+                 <label htmlFor="statusToggle" className="font-bold text-sm text-gray-700 dark:text-gray-200 cursor-pointer">
                     Account is <span className={(formData?.status || 'active') === 'active' ? "text-green-600" : "text-red-600"}>
                       {(formData?.status || 'active').toUpperCase()}
                     </span>
@@ -483,7 +497,7 @@ const Profile = () => {
               <div className="pt-4">
                 <button 
                   onClick={handleUpdate}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-black shadow-lg shadow-blue-100 transition-all active:scale-95"
+                 className="w-full bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-600 text-white py-4 rounded-2xl font-black shadow-lg shadow-blue-100 dark:shadow-none transition-all active:scale-95"
                 >
                   Confirm & Update Profile
                 </button>

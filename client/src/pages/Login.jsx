@@ -12,6 +12,7 @@ const Login = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
 
   // Load remembered email on startup
   useEffect(() => {
@@ -25,6 +26,7 @@ const Login = () => {
 const handleLogin = async (e) => {
   e.preventDefault();
 
+  setIsLoading(true); // START LOADING
   try {
    const res = await fetch(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
@@ -62,6 +64,11 @@ if (userRole === 'admin') {
     // This catches network errors (e.g., server is down)
     console.error("Login Error:", error);
     toast.error("Server connection failed");
+  }
+    finally {
+    // 4. THIS IS THE KEY: This runs NO MATTER WHAT.
+    // Whether it was a success or an error, we stop the loading here.
+    setIsLoading(false); 
   }
 };
 
@@ -183,16 +190,30 @@ const handleInformAdmin = async (e) => {
                 </button>
               </div>
             </div>
-
-            {/* Sign In Button */}
-            <div>
-              <button
-                type="submit"
-                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-md text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all active:scale-[0.98]"
-              >
-                Sign In
-              </button>
-            </div>
+{/* Sign In Button */}
+<div>
+  <button
+    type="submit"
+    disabled={isLoading} // Prevents double submission
+    className={`w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-xl shadow-md text-sm font-bold text-white transition-all active:scale-[0.98] ${
+      isLoading 
+        ? "bg-blue-400 cursor-not-allowed" 
+        : "bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+    }`}
+  >
+    {isLoading ? (
+      <>
+        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        Signing in...
+      </>
+    ) : (
+      "Sign In"
+    )}
+  </button>
+</div>
           </form>
 
           {/* Business Rule Footer */}
