@@ -308,7 +308,7 @@ const response = await fetch(`${API_BASE_URL}/tasks/get-logs/${effectiveUserId}`
       )}
 
       <nav className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 px-4 md:px-8 py-4 flex justify-between items-center sticky top-0 z-50">
-        <h1 className="text-lg font-bold text-blue-600 dark:text-blue-400 leading-none">Hello, {user?.name || 'User'}, Welcome to Suchana Enterprises!!</h1>
+        <h1 className="text-lg font-bold text-blue-600 dark:text-blue-400 leading-none">Hello, {user?.name || 'User'}, Welcome to Vivan Systems!!</h1>
 
 
         <div className="flex gap-4 items-center">
@@ -442,7 +442,19 @@ const response = await fetch(`${API_BASE_URL}/tasks/get-logs/${effectiveUserId}`
                   const isDisabled = (isSaved && !isEditing) || day.isFuture || day.isWeekOff || !isWeekEditable;
                   const isDayOff = logData[day.dbDate]?.day_type && logData[day.dbDate]?.day_type !== "Working";
                   return (
-                    <tr key={idx} className={`transition-colors ${day.isWeekOff ? 'bg-red-50/50 dark:bg-red-900/10' : 'hover:bg-blue-50/20 dark:hover:bg-blue-900/10'}`}>
+                    <tr key={idx} className={`transition-colors ${
+    // 1. Condition for Faint Red (Week Off or Leave)
+    (day.isWeekOff || logData[day.dbDate]?.day_type === "Leave")
+      ? 'bg-red-50/50 dark:bg-red-900/10' 
+      
+    // 2. Condition for Faint Blue (Holiday)
+    : logData[day.dbDate]?.day_type === "Holiday"
+      ? 'bg-blue-50/50 dark:bg-blue-900/20' 
+      
+    // 3. Default hover state for Working days
+      : 'hover:bg-blue-50/20 dark:hover:bg-blue-900/10'
+  }`}
+>
                       <td className="px-6 py-4"><div className="font-bold text-gray-900 dark:text-slate-200">{day.name}</div><div className="text-[10px] font-bold text-gray-400">{day.date}</div></td>
                       {day.isWeekOff ? (<td colSpan="6" className="px-6 py-4 text-center"><span className="text-red-500 font-black uppercase tracking-widest text-xs">Week Off</span></td>) : (
                         <>
@@ -460,8 +472,19 @@ const response = await fetch(`${API_BASE_URL}/tasks/get-logs/${effectiveUserId}`
                             <input type="text" value={logData[day.dbDate]?.module_name || ""} disabled={isDisabled || isDayOff} placeholder={logData[day.dbDate]?.project_name === "Others" ? "REQUIRED*" : "Module"} className={`w-full bg-transparent border-b text-sm font-medium outline-none transition-all dark:text-slate-200 ${logData[day.dbDate]?.project_name === "Others" ? "border-blue-400" : "border-transparent"}`} onChange={(e) => handleInputChange(day.dbDate, 'module_name', e.target.value)} />
                           </td>
                           <td className="px-6 py-4">
-                            <textarea value={logData[day.dbDate]?.task_description || ""} disabled={isDisabled || isDayOff} placeholder="Task description..." rows="1" className="w-full bg-transparent border-none text-sm py-1 resize-none dark:text-slate-200 outline-none" onChange={(e) => handleInputChange(day.dbDate, 'task_description', e.target.value)} />
-                          </td>
+  <textarea
+    value={logData[day.dbDate]?.task_description || ""}
+    disabled={isDisabled || isDayOff}
+    placeholder="Task description..."
+    rows="1"
+    className={`bg-white border border-gray-300 rounded-md text-sm px-2 py-1 transition-all shadow-sm ${
+      isDisabled || isDayOff 
+        ? "resize-none border-transparent w-full bg-transparent" 
+        : "resize min-w-[120px] min-h-[38px] max-w-[400px] max-h-[200px] focus:border-blue-500 focus:ring-1 focus:ring-blue-500 z-10 relative"
+    }`}
+    onChange={(e) => handleInputChange(day.dbDate, 'task_description', e.target.value)}
+  />
+</td>
                           <td className="px-6 py-4 text-center">
                             <input type="text" value={logData[day.dbDate]?.hours_worked || ""} disabled={isDisabled || isDayOff} placeholder="HH:mm" className="w-16 bg-gray-100 dark:bg-slate-800 border-none rounded-lg px-2 py-1 text-center text-xs font-bold dark:text-white outline-none" onChange={(e) => handleInputChange(day.dbDate, 'hours_worked', e.target.value)} onBlur={(e) => formatTimeInput(day.dbDate, e.target.value)} />
                           </td>
