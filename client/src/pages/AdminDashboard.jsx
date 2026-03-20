@@ -134,7 +134,7 @@ const currentUser = JSON.parse(sessionStorage.getItem('user')) || {};
     <div className={`${darkMode ? 'dark bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'} min-h-screen font-sans transition-colors duration-300`}>
       {/* Navigation */}
       <nav className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b px-4 md:px-8 py-4 flex justify-between items-center sticky top-0 z-50 shadow-sm`}>
-        <h1 className="text-xl font-bold text-blue-600">Worklog <span className={darkMode ? 'text-white' : 'text-gray-900'}>Admin</span></h1>
+        <h1 className="text-xl font-bold text-blue-600">Vivan Systems <span className={darkMode ? 'text-white' : 'text-gray-900'}>Admin</span></h1>
         <div className="hidden md:flex items-center gap-4">
           <button 
   onClick={() => {

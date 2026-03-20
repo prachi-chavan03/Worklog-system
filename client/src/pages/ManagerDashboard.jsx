@@ -101,7 +101,7 @@ const displayUsers = Array.isArray(users)
       
       <nav className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-8 py-4 flex justify-between items-center sticky top-0 z-50 shadow-sm">
         <h1 className="text-xl font-bold text-blue-600 ">
-          Worklog <span className="text-slate-900 dark:text-white">Manager</span>
+          Vivan Systems <span className="text-slate-900 dark:text-white">Manager</span>
         </h1>
         
         <div className="flex items-center gap-6">

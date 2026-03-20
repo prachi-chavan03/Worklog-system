@@ -331,7 +331,7 @@ const response = await fetch(`${API_BASE_URL}/tasks/get-logs/${effectiveUserId}`
   <div className="bg-amber-100 dark:bg-amber-900/20 border-l-4 border-amber-500 p-4 mb-4 flex justify-between items-center">
     <div>
       <p className="text-sm text-amber-700 dark:text-amber-400">
-        Currently viewing <span className="font-bold">{viewingUserName}</span>'s worklogs
+        Currently viewing <span className="font-bold">{viewingUserName}</span>'s timesheet.
       </p>
     </div>
     <button 
